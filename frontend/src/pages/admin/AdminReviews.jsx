@@ -6,12 +6,14 @@ import {
 } from 'lucide-react'
 import useReviewStore from '../../stores/reviewStore'
 import useCourtStore from '../../stores/courtStore'
+import useCustomerStore from '../../stores/customerStore'
 import SportIcon from '../../components/SportIcon'
 import CustomSelect from '../../components/CustomSelect'
 
 export default function AdminReviews() {
   const { reviews, replyReview, deleteReply, toggleFeatured, deleteReview, clearAllReviews } = useReviewStore()
   const { courts } = useCourtStore()
+  const { customers } = useCustomerStore()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSport, setSelectedSport] = useState('ALL')
@@ -361,6 +363,15 @@ export default function AdminReviews() {
         ) : (
           filteredReviews.map((rev) => {
             const isFeatured = !!rev.is_featured
+            const customerName = rev.customer_name || 'Pemain'
+            const matchedCustomer = customers.find(
+              (c) => c.name?.toLowerCase() === customerName.toLowerCase() ||
+                     (rev.customer_email && c.email?.toLowerCase() === rev.customer_email.toLowerCase())
+            )
+            const avatarSrc = rev.avatar_url ||
+              rev.customer_avatar ||
+              matchedCustomer?.avatar_url ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=2563eb&color=fff&bold=true&size=128`
 
             return (
               <div
@@ -372,12 +383,18 @@ export default function AdminReviews() {
                 {/* Header Row: User info & Court badge */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center text-sm shrink-0">
-                      {rev.customer_name?.charAt(0) || 'U'}
-                    </div>
+                    <img
+                      src={avatarSrc}
+                      alt={customerName}
+                      className="w-11 h-11 rounded-2xl object-cover border border-border/80 shadow-2xs shrink-0 bg-surface"
+                      onError={(e) => {
+                        e.target.onerror = null
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=2563eb&color=fff&bold=true&size=128`
+                      }}
+                    />
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-text-primary">{rev.customer_name}</h4>
+                        <h4 className="font-bold text-sm text-text-primary">{customerName}</h4>
                         {rev.verified && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/50">
                             <ShieldCheck size={11} /> Pemain Terverifikasi

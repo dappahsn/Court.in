@@ -9,6 +9,7 @@ import useCourtStore from '../stores/courtStore'
 import useBookingStore from '../stores/bookingStore'
 import useAuthStore from '../stores/authStore'
 import useReviewStore from '../stores/reviewStore'
+import useCustomerStore from '../stores/customerStore'
 import useSettingsStore from '../stores/settingsStore'
 import SportIcon from '../components/SportIcon'
 import DatePicker from '../components/DatePicker'
@@ -30,8 +31,9 @@ export default function CourtDetailPage() {
   const navigate = useNavigate()
   const { courts, manualLocks } = useCourtStore()
   const { bookings, setDraftBooking } = useBookingStore()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const { reviews } = useReviewStore()
+  const { customers } = useCustomerStore()
   const { settings } = useSettingsStore()
 
   const court = courts.find((c) => c.id === id) || courts[0]
@@ -254,59 +256,82 @@ export default function CourtDetailPage() {
             {/* Reviews List */}
             {courtLiveReviews.length > 0 ? (
               <div className="space-y-3">
-                {courtLiveReviews.map((rev) => (
-                  <div key={rev.id} className="p-4 rounded-xl bg-surface-container-low border border-border/60 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
-                          {(rev.customer_name || rev.user_name || 'U').charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-text-primary">
-                              {rev.customer_name || rev.user_name}
-                            </p>
-                            {rev.verified && (
-                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/50">
-                                Terverifikasi
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-text-muted">{rev.date}</p>
-                        </div>
-                      </div>
-                      {/* Stars */}
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={12}
-                            className={
-                              star <= rev.rating
-                                ? 'text-star-filled fill-star-filled'
-                                : 'text-star-empty fill-star-empty'
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                      "{rev.comment}"
-                    </p>
+                {courtLiveReviews.map((rev) => {
+                  const customerName = rev.customer_name || rev.user_name || 'Pemain'
+                  const matchedCustomer = customers.find(
+                    (c) => c.name?.toLowerCase() === customerName.toLowerCase() ||
+                           (rev.customer_email && c.email?.toLowerCase() === rev.customer_email.toLowerCase())
+                  )
+                  const currentUserAvatar = (user?.full_name?.toLowerCase() === customerName.toLowerCase() || (user?.email && rev.customer_email && user.email.toLowerCase() === rev.customer_email.toLowerCase()))
+                    ? (user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null))
+                    : null
 
-                    {/* Admin Reply if exists */}
-                    {rev.admin_reply && (
-                      <div className="mt-2 pl-3.5 border-l-2 border-primary/40 bg-primary-light/40 p-2.5 rounded-r-xl space-y-1">
-                        <span className="text-[11px] font-bold text-primary flex items-center gap-1">
-                          Respon Pengelola Venue:
-                        </span>
-                        <p className="text-xs text-text-secondary leading-relaxed">
-                          {rev.admin_reply}
-                        </p>
+                  const avatarSrc = rev.avatar_url ||
+                    rev.customer_avatar ||
+                    matchedCustomer?.avatar_url ||
+                    currentUserAvatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=2563eb&color=fff&bold=true&size=128`
+
+                  return (
+                    <div key={rev.id} className="p-4 rounded-2xl bg-surface-container-low border border-border/60 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={avatarSrc}
+                            alt={customerName}
+                            className="w-10 h-10 rounded-full object-cover border border-border/80 shadow-2xs shrink-0 bg-surface"
+                            onError={(e) => {
+                              e.target.onerror = null
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=2563eb&color=fff&bold=true&size=128`
+                            }}
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-text-primary">
+                                {customerName}
+                              </p>
+                              {rev.verified && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/50">
+                                  Terverifikasi
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-text-muted">{rev.date}</p>
+                          </div>
+                        </div>
+                        {/* Stars */}
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={13}
+                              className={
+                                star <= rev.rating
+                                  ? 'text-star-filled fill-star-filled'
+                                  : 'text-star-empty fill-star-empty'
+                              }
+                            />
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <p className="text-sm text-text-secondary leading-relaxed pl-1">
+                        "{rev.comment}"
+                      </p>
+
+                      {/* Admin Reply if exists */}
+                      {rev.admin_reply && (
+                        <div className="mt-2 pl-3.5 border-l-2 border-primary/40 bg-primary-light/40 p-2.5 rounded-r-xl space-y-1">
+                          <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                            Respon Pengelola Venue:
+                          </span>
+                          <p className="text-xs text-text-secondary leading-relaxed">
+                            {rev.admin_reply}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className="py-8 text-center bg-surface-container-low/40 rounded-2xl border border-dashed border-border/80 p-6 space-y-1.5">

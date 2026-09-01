@@ -52,11 +52,15 @@ export default function DashboardPage() {
 
     if (res.success) {
       // ── Two-Way Interconnection: Sync to Admin Reviews Store ──
+      const userAvatar = user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null)
+
       addReview({
         court_id: reviewBooking.court_id,
         court_name: reviewBooking.court_name,
         court_type: reviewBooking.court_type,
         customer_name: user?.full_name || reviewBooking.customer_name || 'Pemain',
+        customer_email: user?.email || reviewBooking.customer_phone || null,
+        avatar_url: userAvatar,
         booking_id: reviewBooking.id,
         rating: ratingInput,
         comment: commentText,
