@@ -232,8 +232,12 @@ export default function AdminLayout() {
 
           <div className="flex items-center justify-between pt-2 px-1">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
-                {user?.full_name?.charAt(0) || 'A'}
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ring-1 ring-slate-700">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.full_name?.charAt(0) || 'A'
+                )}
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs font-bold text-white truncate">{user?.full_name}</p>
@@ -320,42 +324,59 @@ export default function AdminLayout() {
                     {unreadNotifCount > 0 && (
                       <button
                         type="button"
-                        onClick={() => {
-                          markAllAsRead()
-                          showToast('Semua notifikasi ditandai dibaca.')
-                        }}
-                        className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                        onClick={markAllAsRead}
+                        className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
                       >
-                        Tandai Dibaca
+                        Tandai Semua Dibaca
                       </button>
                     )}
                   </div>
 
-                  <div className="divide-y divide-border/60 max-h-72 overflow-y-auto">
-                    {notifications.slice(0, 4).map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => {
-                          markAsRead(n.id)
-                          if (n.link) {
-                            navigate(n.link)
-                            setNotifDropdownOpen(false)
-                          }
-                        }}
-                        className={`p-3 text-xs transition-colors cursor-pointer ${
-                          !n.is_read ? 'bg-primary-light/30 hover:bg-primary-light/50' : 'hover:bg-surface-container-low'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-bold text-text-primary line-clamp-1">{n.title}</p>
-                          <span className="text-[10px] text-text-muted shrink-0">{n.time}</span>
+                  <div className="max-h-80 overflow-y-auto divide-y divide-border/60">
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 5).map((notif) => (
+                        <div
+                          key={notif.id}
+                          onClick={() => markAsRead(notif.id)}
+                          className={`p-3.5 hover:bg-surface-container-low/80 transition-colors cursor-pointer flex gap-3 ${
+                            !notif.is_read ? 'bg-primary-light/20' : ''
+                          }`}
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+                              notif.type === 'BOOKING'
+                                ? 'bg-primary-light text-primary'
+                                : notif.type === 'CHECKIN'
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-amber-50 text-amber-600'
+                            }`}
+                          >
+                            {notif.type === 'BOOKING' && <CalendarCheck size={14} />}
+                            {notif.type === 'CHECKIN' && <CheckCircle2 size={14} />}
+                            {notif.type === 'CANCELLATION' && <AlertCircle size={14} />}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-text-primary leading-tight">
+                              {notif.title}
+                            </p>
+                            <p className="text-[11px] text-text-secondary mt-0.5 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <span className="text-[10px] text-text-muted mt-1 block font-medium">
+                              {notif.time}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-text-secondary line-clamp-2 mt-0.5">{n.message}</p>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-text-muted text-xs">
+                        Tidak ada notifikasi baru.
                       </div>
-                    ))}
+                    )}
                   </div>
 
-                  <div className="p-2 border-t border-border bg-surface-container-low/50">
+                  <div className="p-2 border-t border-border bg-surface-container-low/30">
                     <Link
                       to="/admin/notifications"
                       onClick={() => setNotifDropdownOpen(false)}
@@ -375,8 +396,12 @@ export default function AdminLayout() {
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-2 py-1 pl-1.5 pr-2.5 rounded-full border border-border bg-surface hover:bg-surface-container-low transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
-                  {user?.full_name?.charAt(0) || 'A'}
+                <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 ring-1 ring-border/50">
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.full_name?.charAt(0) || 'A'
+                  )}
                 </div>
                 <span className="text-xs font-bold text-text-primary hidden sm:inline">
                   {user?.full_name}

@@ -149,8 +149,12 @@ export default function AdminCustomers() {
                   <tr key={c.id} className="hover:bg-surface-container-low/60 transition-colors">
                     <td className="py-3.5 px-4 sm:px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0">
-                          {(c.name || 'P').charAt(0)}
+                        <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0 overflow-hidden ring-1 ring-border/50">
+                          {c.avatar_url ? (
+                            <img src={c.avatar_url} alt={c.name} className="w-full h-full object-cover" />
+                          ) : (
+                            (c.name || 'P').charAt(0)
+                          )}
                         </div>
                         <div>
                           <p className="font-bold text-text-primary text-sm">{c.name}</p>
@@ -248,8 +252,12 @@ export default function AdminCustomers() {
             </div>
 
             <div className="p-3 bg-surface-container-low rounded-2xl border border-border text-left flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0">
-                {(deleteTarget.name || 'P').charAt(0)}
+              <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0 overflow-hidden ring-1 ring-border/50">
+                {deleteTarget.avatar_url ? (
+                  <img src={deleteTarget.avatar_url} alt={deleteTarget.name} className="w-full h-full object-cover" />
+                ) : (
+                  (deleteTarget.name || 'P').charAt(0)
+                )}
               </div>
               <div className="truncate text-xs">
                 <p className="font-bold text-text-primary truncate">{deleteTarget.name}</p>

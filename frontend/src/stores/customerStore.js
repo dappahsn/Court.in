@@ -113,6 +113,7 @@ const useCustomerStore = create((set, get) => ({
               name: u.full_name || merged[idx].name,
               phone: u.phone_number || merged[idx].phone,
               tier: u.tier || merged[idx].tier,
+              avatar_url: u.avatar_url || merged[idx].avatar_url || null,
             }
           } else {
             merged.unshift({
@@ -121,6 +122,7 @@ const useCustomerStore = create((set, get) => ({
               email: u.email,
               phone: u.phone_number || '-',
               tier: u.tier || 'Regular',
+              avatar_url: u.avatar_url || null,
               total_bookings: 1,
               total_spend: 152000,
               preferred_sport: 'FUTSAL',
