@@ -124,14 +124,16 @@ export default function Header() {
                         <User size={16} className="text-primary" />
                         Profil & Pengaturan
                       </Link>
-                      <Link
-                        to="/admin"
-                        onClick={() => setProfileDropdown(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-primary hover:bg-surface-container-low transition-colors font-medium"
-                      >
-                        <ShieldCheck size={16} className="text-primary" />
-                        <span>Panel Admin & Venue</span>
-                      </Link>
+                      {user?.role === 'ADMIN' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setProfileDropdown(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-primary hover:bg-surface-container-low transition-colors font-medium"
+                        >
+                          <ShieldCheck size={16} className="text-primary" />
+                          <span>Panel Admin & Venue</span>
+                        </Link>
+                      )}
                     </div>
                     <div className="border-t border-border/80 pt-1">
                       <button
@@ -162,16 +164,6 @@ export default function Header() {
                 </Link>
               </div>
             )}
-
-            {/* Quick Link to Admin Portal */}
-            <Link
-              to="/admin"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-primary/30 bg-primary-light text-primary hover:bg-primary hover:text-white transition-all text-xs font-bold shadow-2xs cursor-pointer"
-              title="Masuk ke Panel Pengelola Bisnis"
-            >
-              <ShieldCheck size={14} />
-              <span>Portal Admin</span>
-            </Link>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -208,19 +200,8 @@ export default function Header() {
               </NavLink>
             ))}
 
-            <div className="pt-2 border-t border-border/80 mt-1">
-              <Link
-                to="/admin"
-                onClick={handleNavClick}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-light text-primary font-bold text-xs border border-primary/30"
-              >
-                <ShieldCheck size={15} />
-                <span>Masuk ke Portal Admin & Venue</span>
-              </Link>
-            </div>
-
             {!isAuthenticated && (
-              <div className="pt-2 grid grid-cols-2 gap-2">
+              <div className="pt-3 mt-2 border-t border-border grid grid-cols-2 gap-2">
                 <Link
                   to="/login"
                   onClick={handleNavClick}
