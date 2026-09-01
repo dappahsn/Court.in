@@ -5,10 +5,10 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
   const { bookings } = useBookingStore()
   const [hoveredIndex, setHoveredIndex] = useState(null)
 
-  // Generate date points based on selected timeRange
+  // Pure 100% real data matched directly from bookings store
   const chartData = useMemo(() => {
     const today = new Date()
-    const daysCount = timeRange === 'today' ? 6 : timeRange === '30days' ? 14 : 7
+    const daysCount = timeRange === 'today' ? 7 : timeRange === '30days' ? 30 : 7
     const result = []
 
     const indonesianMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
@@ -20,7 +20,7 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
       const dateStr = d.toISOString().slice(0, 10)
       const dayName = `${d.getDate()} ${indonesianMonths[d.getMonth()]}`
 
-      // Calculate real bookings revenue for this date
+      // Strictly real bookings matched by date
       const matchedBookings = bookings.filter((b) => {
         const bDate = b.booking_date || b.created_at?.slice(0, 10)
         return bDate === dateStr && b.status !== 'CANCELLED'
@@ -29,31 +29,22 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
       const realRevenue = matchedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
       const bookingCount = matchedBookings.length
 
-      // Add realistic baseline for older mock days so chart looks full & active
-      let baselineRevenue = 0
-      if (i > 0) {
-        const mockDaily = [180000, 240000, 152000, 304000, 228000, 190000, 320000]
-        baselineRevenue = mockDaily[i % mockDaily.length]
-      }
-
-      const totalRevenue = realRevenue > 0 ? realRevenue : (i === 0 ? (realRevenue || 304000) : baselineRevenue)
-      const count = bookingCount > 0 ? bookingCount : Math.max(1, Math.round(totalRevenue / 152000))
-
       result.push({
         dateStr,
         label: dayName,
-        revenue: totalRevenue,
-        count,
+        revenue: realRevenue, // 0 if no real bookings on this day
+        count: bookingCount,
       })
     }
 
     return result
   }, [bookings, timeRange])
 
-  // Chart coordinate calculations
+  // Dynamic Y-axis scale based on real maximum
   const maxRevenue = useMemo(() => {
-    const maxVal = Math.max(...chartData.map((d) => d.revenue), 200000)
-    return Math.ceil(maxVal / 100000) * 100000
+    const maxVal = Math.max(...chartData.map((d) => d.revenue), 0)
+    if (maxVal === 0) return 200000
+    return Math.ceil(maxVal / 50000) * 50000
   }, [chartData])
 
   const width = 640
@@ -211,10 +202,10 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
             <circle
               cx={p.x}
               cy={p.y}
-              r={hoveredIndex === idx ? 6 : 4}
+              r={hoveredIndex === idx ? 6 : p.revenue > 0 ? 4.5 : 3.5}
               fill="#ffffff"
-              stroke="#2563eb"
-              strokeWidth={hoveredIndex === idx ? 3.5 : 2.5}
+              stroke={p.revenue > 0 ? '#2563eb' : '#94a3b8'}
+              strokeWidth={hoveredIndex === idx ? 3.5 : 2}
               className="transition-all duration-150 cursor-pointer"
               filter={hoveredIndex === idx ? 'url(#glowPoint)' : undefined}
             />

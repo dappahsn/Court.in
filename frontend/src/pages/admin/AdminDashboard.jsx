@@ -43,9 +43,13 @@ export default function AdminDashboard() {
     const pendingCashCount = bookings.filter((b) => b.status === 'PAY_AT_VENUE').length
     const avgOrderValue = paidBookings.length > 0 ? Math.round(totalRevenue / paidBookings.length) : 152000
 
-    const futsalRevenue = bookings.filter((b) => b.court_type === 'FUTSAL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
-    const badmintonRevenue = bookings.filter((b) => b.court_type === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
-    const padelRevenue = bookings.filter((b) => b.court_type === 'PADEL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
+    const futsalRevenue = bookings.filter((b) => (b.court_type || '').toUpperCase() === 'FUTSAL' && b.status !== 'CANCELLED').reduce((s, b) => s + (b.total_price || 0), 0)
+    const badmintonRevenue = bookings.filter((b) => (b.court_type || '').toUpperCase() === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + (b.total_price || 0), 0)
+    const padelRevenue = bookings.filter((b) => (b.court_type || '').toUpperCase() === 'PADEL' && b.status !== 'CANCELLED').reduce((s, b) => s + (b.total_price || 0), 0)
+
+    const futsalPct = totalRevenue > 0 ? Math.round((futsalRevenue / totalRevenue) * 100) : 0
+    const padelPct = totalRevenue > 0 ? Math.round((padelRevenue / totalRevenue) * 100) : 0
+    const badmintonPct = totalRevenue > 0 ? Math.round((badmintonRevenue / totalRevenue) * 100) : 0
 
     return {
       totalBookings,
@@ -59,38 +63,58 @@ export default function AdminDashboard() {
       futsalRevenue,
       badmintonRevenue,
       padelRevenue,
+      futsalPct,
+      padelPct,
+      badmintonPct,
       activeCourtsCount: courts.length,
       customersCount: customers.length,
-      occupancyRate: 88,
+      occupancyRate: totalBookings > 0 ? Math.min(100, Math.round((totalBookings / (courts.length * 8)) * 100)) : 0,
     }
   }, [bookings, courts, customers])
 
-  // Top Performing Courts
+  // Pure 100% Real Top Performing Courts from Bookings
   const topCourts = useMemo(() => {
-    return [
-      {
-        id: 'court-1',
-        name: 'Futsal Arena Banda Aceh - Lapangan A',
-        sport: 'FUTSAL',
-        total_hours: 12,
-        revenue: 1824000,
-      },
-      {
-        id: 'court-2',
-        name: 'Padel Pro Court Banda Aceh',
-        sport: 'PADEL',
-        total_hours: 8,
-        revenue: 1776000,
-      },
-      {
-        id: 'court-3',
-        name: 'GOR Badminton Kutaraja',
-        sport: 'BADMINTON',
-        total_hours: 6,
-        revenue: 516000,
-      },
-    ]
-  }, [])
+    const courtMap = {}
+
+    // Aggregate real bookings by court
+    bookings.forEach((b) => {
+      if (b.status === 'CANCELLED') return
+      const courtName = b.court_name || 'Lapangan Court.in'
+      const sport = b.court_type || 'FUTSAL'
+      const price = b.total_price || 0
+
+      if (!courtMap[courtName]) {
+        courtMap[courtName] = {
+          id: b.court_id || courtName,
+          name: courtName,
+          sport: sport,
+          total_hours: 0,
+          revenue: 0,
+        }
+      }
+      courtMap[courtName].total_hours += 1
+      courtMap[courtName].revenue += price
+    })
+
+    const list = Object.values(courtMap).sort((a, b) => b.revenue - a.revenue)
+
+    // Fill with remaining registered courts if list is less than 3
+    if (list.length < 3 && courts.length > 0) {
+      courts.forEach((c) => {
+        if (!list.some((item) => item.name === c.name)) {
+          list.push({
+            id: c.id,
+            name: c.name,
+            sport: c.type,
+            total_hours: 0,
+            revenue: 0,
+          })
+        }
+      })
+    }
+
+    return list.slice(0, 3)
+  }, [bookings, courts])
 
   return (
     <div className="space-y-8">
@@ -325,11 +349,11 @@ export default function AdminDashboard() {
                   <SportIcon type="FUTSAL" className="w-4 h-4 text-primary" /> Futsal
                 </span>
                 <span className="font-bold text-text-primary">
-                  Rp{metrics.futsalRevenue.toLocaleString('id-ID')} (52%)
+                  Rp{metrics.futsalRevenue.toLocaleString('id-ID')} ({metrics.futsalPct}%)
                 </span>
               </div>
               <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: '52%' }} />
+                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${metrics.futsalPct}%` }} />
               </div>
             </div>
 
@@ -339,11 +363,11 @@ export default function AdminDashboard() {
                   <SportIcon type="PADEL" className="w-4 h-4 text-primary" /> Padel Tennis
                 </span>
                 <span className="font-bold text-text-primary">
-                  Rp{metrics.padelRevenue.toLocaleString('id-ID')} (31%)
+                  Rp{metrics.padelRevenue.toLocaleString('id-ID')} ({metrics.padelPct}%)
                 </span>
               </div>
               <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full" style={{ width: '31%' }} />
+                <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${metrics.padelPct}%` }} />
               </div>
             </div>
 
@@ -353,11 +377,11 @@ export default function AdminDashboard() {
                   <SportIcon type="BADMINTON" className="w-4 h-4 text-primary" /> Badminton
                 </span>
                 <span className="font-bold text-text-primary">
-                  Rp{metrics.badmintonRevenue.toLocaleString('id-ID')} (17%)
+                  Rp{metrics.badmintonRevenue.toLocaleString('id-ID')} ({metrics.badmintonPct}%)
                 </span>
               </div>
               <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '17%' }} />
+                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${metrics.badmintonPct}%` }} />
               </div>
             </div>
           </div>
