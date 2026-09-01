@@ -26,13 +26,21 @@ const getRegisteredUsers = () => {
 const saveRegisteredUser = (user, password) => {
   const users = getRegisteredUsers()
   const existingIdx = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase())
-  const record = { ...user, password }
+  const prevRecord = existingIdx >= 0 ? users[existingIdx] : {}
+  const record = { ...prevRecord, ...user }
+  if (password) {
+    record.password = password
+  }
   if (existingIdx >= 0) {
     users[existingIdx] = record
   } else {
     users.push(record)
   }
-  localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+  try {
+    localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+  } catch (e) {
+    console.error('Failed to save registered user', e)
+  }
 }
 
 const savedToken = localStorage.getItem('courtin_token')
@@ -56,6 +64,7 @@ const useAuthStore = create((set) => ({
       const { token, user } = res.data
       localStorage.setItem('courtin_token', token)
       localStorage.setItem('courtin_user', JSON.stringify(user))
+      saveRegisteredUser(user, password)
       set({ user, token, isAuthenticated: true, isLoading: false })
       return { success: true, user }
     } catch {
@@ -64,10 +73,12 @@ const useAuthStore = create((set) => ({
       if (emailClean === 'admin@court.in') {
         if (password === 'Lampriet37!' || password === 'admin123' || password.length >= 6) {
           const token = 'jwt_live_admin_' + Date.now()
+          const savedAdminProfile = localStorage.getItem('courtin_admin_profile')
+          const adminObj = savedAdminProfile ? JSON.parse(savedAdminProfile) : DEFAULT_ADMIN
           localStorage.setItem('courtin_token', token)
-          localStorage.setItem('courtin_user', JSON.stringify(DEFAULT_ADMIN))
-          set({ user: DEFAULT_ADMIN, token, isAuthenticated: true, isLoading: false })
-          return { success: true, user: DEFAULT_ADMIN }
+          localStorage.setItem('courtin_user', JSON.stringify(adminObj))
+          set({ user: adminObj, token, isAuthenticated: true, isLoading: false })
+          return { success: true, user: adminObj }
         } else {
           set({ isLoading: false })
           return { success: false, message: 'Kata sandi akun Admin tidak sesuai.' }
@@ -129,6 +140,7 @@ const useAuthStore = create((set) => ({
       const { token, user } = res.data
       localStorage.setItem('courtin_token', token)
       localStorage.setItem('courtin_user', JSON.stringify(user))
+      saveRegisteredUser(user, data.password)
       set({ user, token, isAuthenticated: true, isLoading: false })
       return { success: true, user }
     } catch {
@@ -169,12 +181,42 @@ const useAuthStore = create((set) => ({
     set({ user: null, token: null, isAuthenticated: false })
   },
 
-  updateProfile: (updatedData) => {
+  /**
+   * Update Profile & Avatar with Full Persistence across Logouts
+   */
+  updateProfile: async (updatedData) => {
+    let newUser
     set((state) => {
-      const newUser = { ...state.user, ...updatedData }
-      localStorage.setItem('courtin_user', JSON.stringify(newUser))
+      newUser = { ...state.user, ...updatedData }
+      try {
+        localStorage.setItem('courtin_user', JSON.stringify(newUser))
+
+        // Permanently persist to registered users database in localStorage
+        const users = getRegisteredUsers()
+        const existingIdx = users.findIndex((u) => u.email?.toLowerCase() === newUser.email?.toLowerCase())
+        if (existingIdx >= 0) {
+          users[existingIdx] = { ...users[existingIdx], ...newUser }
+        } else {
+          users.push(newUser)
+        }
+        localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+
+        // If admin profile updated, persist admin profile cache
+        if (newUser.email?.toLowerCase() === 'admin@court.in') {
+          localStorage.setItem('courtin_admin_profile', JSON.stringify(newUser))
+        }
+      } catch (e) {
+        console.error('Failed to persist updated user profile', e)
+      }
       return { user: newUser }
     })
+
+    // Sync with backend API if online
+    try {
+      await api.patch('/auth/profile', updatedData)
+    } catch {
+      // Local persistence already verified
+    }
   },
 
   fetchProfile: async () => {
