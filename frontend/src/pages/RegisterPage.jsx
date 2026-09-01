@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   User, Mail, Phone, Lock, Calendar, ArrowRight,
@@ -6,21 +6,6 @@ import {
 } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import Logo from '../components/Logo'
-
-const MONTH_OPTIONS = [
-  { value: '01', label: 'Januari' },
-  { value: '02', label: 'Februari' },
-  { value: '03', label: 'Maret' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'Mei' },
-  { value: '06', label: 'Juni' },
-  { value: '07', label: 'Juli' },
-  { value: '08', label: 'Agustus' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'Oktober' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'Desember' },
-]
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -33,27 +18,13 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   
-  // Custom 3-Field Birth Date State
-  const [birthDay, setBirthDay] = useState('')
-  const [birthMonth, setBirthMonth] = useState('')
-  const [birthYear, setBirthYear] = useState('')
+  // Clean auto-formatted Birth Date (DD / MM / YYYY)
+  const [birthDateText, setBirthDateText] = useState('')
 
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
-
-  // Generate Year options (from current year - 8 down to 1945)
-  const yearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear()
-    const maxAllowedYear = currentYear - 6
-    const minYear = 1945
-    const years = []
-    for (let y = maxAllowedYear; y >= minYear; y--) {
-      years.push(String(y))
-    }
-    return years
-  }, [])
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -71,11 +42,31 @@ export default function RegisterPage() {
     }
   }
 
+  // Handle Smart Masked Date Input (DD / MM / YYYY)
+  const handleDateChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 8)
+    let formatted = ''
+
+    if (digits.length <= 2) {
+      formatted = digits
+    } else if (digits.length <= 4) {
+      formatted = `${digits.slice(0, 2)} / ${digits.slice(2)}`
+    } else {
+      formatted = `${digits.slice(0, 2)} / ${digits.slice(2, 4)} / ${digits.slice(4)}`
+    }
+
+    setBirthDateText(formatted)
+    if (fieldErrors.birthDate) {
+      setFieldErrors((prev) => ({ ...prev, birthDate: '' }))
+    }
+  }
+
   const validateAll = () => {
     const errors = {}
     const cleanName = fullName.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '')
+    const cleanDateDigits = birthDateText.replace(/\D/g, '')
 
     if (!cleanName) {
       errors.fullName = 'Nama lengkap wajib diisi.'
@@ -97,8 +88,22 @@ export default function RegisterPage() {
       errors.phone = 'Nomor HP maksimal 15 digit angka.'
     }
 
-    if (!birthDay || !birthMonth || !birthYear) {
-      errors.birthDate = 'Lengkapi tanggal, bulan, dan tahun lahir Anda.'
+    // Validate Birth Date (DD / MM / YYYY)
+    if (cleanDateDigits.length < 8) {
+      errors.birthDate = 'Masukkan tanggal lahir lengkap (contoh: 15 / 08 / 2000).'
+    } else {
+      const day = parseInt(cleanDateDigits.slice(0, 2), 10)
+      const month = parseInt(cleanDateDigits.slice(2, 4), 10)
+      const year = parseInt(cleanDateDigits.slice(4, 8), 10)
+      const currentYear = new Date().getFullYear()
+
+      if (day < 1 || day > 31) {
+        errors.birthDate = 'Tanggal harus antara 1 sampai 31.'
+      } else if (month < 1 || month > 12) {
+        errors.birthDate = 'Bulan harus antara 1 sampai 12.'
+      } else if (year < 1940 || year > currentYear - 5) {
+        errors.birthDate = `Tahun lahir harus antara 1940 sampai ${currentYear - 5}.`
+      }
     }
 
     if (!password) {
@@ -121,13 +126,18 @@ export default function RegisterPage() {
     const cleanName = fullName.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '')
-    const formattedBirthDate = `${birthYear}-${birthMonth}-${birthDay}`
+    const cleanDateDigits = birthDateText.replace(/\D/g, '')
+
+    const day = cleanDateDigits.slice(0, 2)
+    const month = cleanDateDigits.slice(2, 4)
+    const year = cleanDateDigits.slice(4, 8)
+    const formattedIsoDate = `${year}-${month}-${day}`
 
     const res = await register({
       full_name: cleanName,
       email: cleanEmail,
       phone_number: cleanPhone.startsWith('0') ? cleanPhone : `0${cleanPhone}`,
-      birth_date: formattedBirthDate,
+      birth_date: formattedIsoDate,
       password,
     })
 
@@ -253,81 +263,27 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* 4. Tanggal Lahir (Clean 3-Dropdown Selector) */}
+          {/* 4. Tanggal Lahir (Sleek Auto-Formatted Input) */}
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
-              <Calendar size={13} className="text-primary" />
-              <span>Tanggal Lahir</span>
+            <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+              Tanggal Lahir
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" size={16} />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={birthDateText}
+                onChange={handleDateChange}
+                placeholder="HH / BB / TTTT  (contoh: 15 / 08 / 2000)"
+                maxLength={14}
+                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all font-medium placeholder:font-normal placeholder:text-text-muted/60 ${
+                  fieldErrors.birthDate
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
+              />
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {/* Hari */}
-              <select
-                value={birthDay}
-                onChange={(e) => {
-                  setBirthDay(e.target.value)
-                  if (fieldErrors.birthDate) setFieldErrors((p) => ({ ...p, birthDate: '' }))
-                }}
-                className={`w-full px-2.5 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all cursor-pointer ${
-                  fieldErrors.birthDate && !birthDay
-                    ? 'border-danger/80 bg-danger/5'
-                    : 'border-border focus:border-primary'
-                }`}
-              >
-                <option value="">Tanggal</option>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-                  const val = String(day).padStart(2, '0')
-                  return (
-                    <option key={val} value={val}>
-                      {day}
-                    </option>
-                  )
-                })}
-              </select>
-
-              {/* Bulan */}
-              <select
-                value={birthMonth}
-                onChange={(e) => {
-                  setBirthMonth(e.target.value)
-                  if (fieldErrors.birthDate) setFieldErrors((p) => ({ ...p, birthDate: '' }))
-                }}
-                className={`w-full px-2.5 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all cursor-pointer ${
-                  fieldErrors.birthDate && !birthMonth
-                    ? 'border-danger/80 bg-danger/5'
-                    : 'border-border focus:border-primary'
-                }`}
-              >
-                <option value="">Bulan</option>
-                {MONTH_OPTIONS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Tahun */}
-              <select
-                value={birthYear}
-                onChange={(e) => {
-                  setBirthYear(e.target.value)
-                  if (fieldErrors.birthDate) setFieldErrors((p) => ({ ...p, birthDate: '' }))
-                }}
-                className={`w-full px-2.5 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all cursor-pointer ${
-                  fieldErrors.birthDate && !birthYear
-                    ? 'border-danger/80 bg-danger/5'
-                    : 'border-border focus:border-primary'
-                }`}
-              >
-                <option value="">Tahun</option>
-                {yearOptions.map((yr) => (
-                  <option key={yr} value={yr}>
-                    {yr}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {fieldErrors.birthDate && (
               <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
                 <AlertCircle size={12} className="shrink-0" />
