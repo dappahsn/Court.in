@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  User, Mail, Phone, Lock, Calendar, ArrowRight,
+  User, Mail, Phone, Lock, ArrowRight,
   AlertCircle, Eye, EyeOff
 } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import Logo from '../components/Logo'
+import BirthDatePicker from '../components/BirthDatePicker'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -17,10 +18,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  
-  // Clean auto-formatted Birth Date (DD / MM / YYYY)
-  const [birthDateText, setBirthDateText] = useState('')
-
+  const [birthDate, setBirthDate] = useState('') // YYYY-MM-DD
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -42,31 +40,11 @@ export default function RegisterPage() {
     }
   }
 
-  // Handle Smart Masked Date Input (DD / MM / YYYY)
-  const handleDateChange = (e) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 8)
-    let formatted = ''
-
-    if (digits.length <= 2) {
-      formatted = digits
-    } else if (digits.length <= 4) {
-      formatted = `${digits.slice(0, 2)} / ${digits.slice(2)}`
-    } else {
-      formatted = `${digits.slice(0, 2)} / ${digits.slice(2, 4)} / ${digits.slice(4)}`
-    }
-
-    setBirthDateText(formatted)
-    if (fieldErrors.birthDate) {
-      setFieldErrors((prev) => ({ ...prev, birthDate: '' }))
-    }
-  }
-
   const validateAll = () => {
     const errors = {}
     const cleanName = fullName.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '')
-    const cleanDateDigits = birthDateText.replace(/\D/g, '')
 
     if (!cleanName) {
       errors.fullName = 'Nama lengkap wajib diisi.'
@@ -88,22 +66,8 @@ export default function RegisterPage() {
       errors.phone = 'Nomor HP maksimal 15 digit angka.'
     }
 
-    // Validate Birth Date (DD / MM / YYYY)
-    if (cleanDateDigits.length < 8) {
-      errors.birthDate = 'Masukkan tanggal lahir lengkap (contoh: 15 / 08 / 2000).'
-    } else {
-      const day = parseInt(cleanDateDigits.slice(0, 2), 10)
-      const month = parseInt(cleanDateDigits.slice(2, 4), 10)
-      const year = parseInt(cleanDateDigits.slice(4, 8), 10)
-      const currentYear = new Date().getFullYear()
-
-      if (day < 1 || day > 31) {
-        errors.birthDate = 'Tanggal harus antara 1 sampai 31.'
-      } else if (month < 1 || month > 12) {
-        errors.birthDate = 'Bulan harus antara 1 sampai 12.'
-      } else if (year < 1940 || year > currentYear - 5) {
-        errors.birthDate = `Tahun lahir harus antara 1940 sampai ${currentYear - 5}.`
-      }
+    if (!birthDate) {
+      errors.birthDate = 'Tanggal lahir wajib dipilih.'
     }
 
     if (!password) {
@@ -126,18 +90,12 @@ export default function RegisterPage() {
     const cleanName = fullName.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '')
-    const cleanDateDigits = birthDateText.replace(/\D/g, '')
-
-    const day = cleanDateDigits.slice(0, 2)
-    const month = cleanDateDigits.slice(2, 4)
-    const year = cleanDateDigits.slice(4, 8)
-    const formattedIsoDate = `${year}-${month}-${day}`
 
     const res = await register({
       full_name: cleanName,
       email: cleanEmail,
       phone_number: cleanPhone.startsWith('0') ? cleanPhone : `0${cleanPhone}`,
-      birth_date: formattedIsoDate,
+      birth_date: birthDate,
       password,
     })
 
@@ -263,27 +221,19 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* 4. Tanggal Lahir (Sleek Auto-Formatted Input) */}
+          {/* 4. Tanggal Lahir (Interactive BirthDatePicker with Year, Month, Day) */}
           <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
               Tanggal Lahir
             </label>
-            <div className="relative">
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" size={16} />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={birthDateText}
-                onChange={handleDateChange}
-                placeholder="HH / BB / TTTT  (contoh: 15 / 08 / 2000)"
-                maxLength={14}
-                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all font-medium placeholder:font-normal placeholder:text-text-muted/60 ${
-                  fieldErrors.birthDate
-                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
-                    : 'border-border focus:border-primary'
-                }`}
-              />
-            </div>
+            <BirthDatePicker
+              value={birthDate}
+              onChange={(newDate) => {
+                setBirthDate(newDate)
+                if (fieldErrors.birthDate) setFieldErrors((p) => ({ ...p, birthDate: '' }))
+              }}
+              hasError={Boolean(fieldErrors.birthDate)}
+            />
             {fieldErrors.birthDate && (
               <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
                 <AlertCircle size={12} className="shrink-0" />
