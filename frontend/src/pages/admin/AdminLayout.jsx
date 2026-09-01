@@ -25,7 +25,7 @@ const ADMIN_NAV_ITEMS = [
 ]
 
 export default function AdminLayout() {
-  const { user, isAuthenticated, logout, loginAdminDemo } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const { bookings, checkInBooking } = useBookingStore()
   const { notifications, markAsRead, markAllAsRead } = useNotificationStore()
   const navigate = useNavigate()
@@ -88,7 +88,7 @@ export default function AdminLayout() {
     setScanModalOpen(false)
   }
 
-  // If not logged in as Admin, show login/switch prompt
+  // If not logged in as Admin, show authentication prompt
   const isAdmin = isAuthenticated && user?.role === 'ADMIN'
 
   if (!isAdmin) {
@@ -104,33 +104,28 @@ export default function AdminLayout() {
               Portal Bisnis & Admin court.in
             </h1>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Area khusus pengelola venue dan manajemen lapangan olahraga untuk memantau booking, staf, dan keuangan.
+              Area terbatas khusus pemilik venue dan staf pengelola untuk memantau jadwal, pesanan, dan manajemen lapangan.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60 text-xs text-left space-y-1.5">
-            <span className="font-bold text-primary block">Akses Demo Pengelola</span>
-            <p className="text-slate-300">
-              Masuk instan dengan hak akses <strong>Super Admin / Owner</strong> untuk menguji seluruh fitur manajemen.
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-left text-amber-300">
+            <p>
+              Akun Anda saat ini belum memiliki hak akses administrator. Silakan masuk menggunakan akun pengelola venue resmi.
             </p>
           </div>
 
           <div className="space-y-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                loginAdminDemo()
-                showToast('Selamat datang, Super Admin!')
-              }}
-              className="w-full py-3 rounded-xl bg-primary hover:bg-primary-container text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
+            <Link
+              to="/login?redirect=/admin"
+              className="block w-full py-3.5 rounded-xl bg-primary hover:bg-primary-container text-white font-bold text-xs shadow-lg transition-all text-center"
             >
-              Masuk sebagai Super Admin
-            </button>
+              Masuk dengan Akun Admin
+            </Link>
             <Link
               to="/"
-              className="block w-full py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all"
+              className="block w-full py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all text-center"
             >
-              Kembali ke Web Pelanggan
+              Kembali ke Halaman Utama
             </Link>
           </div>
         </div>

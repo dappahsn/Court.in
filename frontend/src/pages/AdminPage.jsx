@@ -12,7 +12,7 @@ import useAuthStore from '../stores/authStore'
 import SportIcon from '../components/SportIcon'
 
 export default function AdminPage() {
-  const { user, loginAdminDemo, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const { bookings, checkInBooking, confirmCashPayment, cancelBookingByAdmin } = useBookingStore()
   const { courts, addCourt, updateCourt, deleteCourt, toggleSlot } = useCourtStore()
 
@@ -180,24 +180,20 @@ export default function AdminPage() {
           <div className="p-4 bg-primary-light rounded-xl border border-primary/20 text-xs text-text-secondary text-left space-y-2">
             <p className="font-bold text-text-primary flex items-center gap-1.5">
               <Sparkles size={14} className="text-primary" />
-              Akses Mode Demo Admin
+              Autentikasi Pengelola Venue
             </p>
             <p>
-              Gunakan tombol di bawah untuk langsung masuk dengan hak akses Super Admin (Daffa Husen).
+              Silakan masuk menggunakan akun Administrator resmi untuk membuka fitur manajemen lapangan dan kasir.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                loginAdminDemo()
-                showToast('Berhasil masuk sebagai Super Admin!')
-              }}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold text-sm shadow-xs transition-all cursor-pointer"
+            <Link
+              to="/login?redirect=/admin"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold text-sm shadow-xs transition-all text-center"
             >
-              Masuk sebagai Super Admin
-            </button>
+              Masuk dengan Akun Admin
+            </Link>
             <Link
               to="/"
               className="w-full sm:w-auto px-6 py-3 rounded-xl border border-border bg-surface hover:bg-surface-container-low text-text-primary font-semibold text-sm transition-all"
