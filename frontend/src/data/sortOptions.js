@@ -1,11 +1,11 @@
-import { Sparkles, Star, TrendingDown, TrendingUp } from 'lucide-react'
+import { ThumbsUp, Star, TrendingDown, TrendingUp } from 'lucide-react'
 
 export const SORT_OPTIONS = [
   {
     id: 'recommended',
     label: 'Rekomendasi',
     desc: 'Paling relevan & populer',
-    icon: Sparkles,
+    icon: ThumbsUp,
   },
   {
     id: 'rating_desc',

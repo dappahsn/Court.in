@@ -4,7 +4,7 @@ import {
   TrendingUp, Calendar, QrCode, CheckCircle2,
   AlertCircle, X, Search, Plus, Edit3, Trash2,
   DollarSign, BarChart3, Clock,
-  Eye, MapPin, Sparkles
+  Eye, MapPin, ShieldCheck
 } from 'lucide-react'
 import useBookingStore from '../stores/bookingStore'
 import useCourtStore from '../stores/courtStore'
@@ -179,7 +179,7 @@ export default function AdminPage() {
 
           <div className="p-4 bg-primary-light rounded-xl border border-primary/20 text-xs text-text-secondary text-left space-y-2">
             <p className="font-bold text-text-primary flex items-center gap-1.5">
-              <Sparkles size={14} className="text-primary" />
+              <ShieldCheck size={14} className="text-primary" />
               Autentikasi Pengelola Venue
             </p>
             <p>
