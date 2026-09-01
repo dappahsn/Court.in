@@ -74,7 +74,11 @@ const useAuthStore = create((set, get) => ({
         delete userObj.password_hash
 
         const storedBirthDate = localStorage.getItem('courtin_birthdate_' + emailClean)
-        if (storedBirthDate) userObj.birth_date = storedBirthDate
+        if (userObj.birth_date) {
+          localStorage.setItem('courtin_birthdate_' + emailClean, userObj.birth_date)
+        } else if (storedBirthDate) {
+          userObj.birth_date = storedBirthDate
+        }
 
         const token = 'jwt_cloud_user_' + Date.now()
         localStorage.setItem('courtin_token', token)
@@ -107,6 +111,7 @@ const useAuthStore = create((set, get) => ({
           email: emailClean,
           password_hash: password,
           phone_number: matchedLocal.phone_number || '081234567890',
+          birth_date: matchedLocal.birth_date || '1998-08-15',
           role: matchedLocal.role || (emailClean === 'admin@court.in' || emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER'),
           tier: matchedLocal.tier || 'Regular Member',
           avatar_url: matchedLocal.avatar_url || null,
@@ -141,6 +146,7 @@ const useAuthStore = create((set, get) => ({
           email: emailClean,
           password_hash: password,
           phone_number: '0812' + Math.floor(10000000 + Math.random() * 90000000),
+          birth_date: '1998-08-15',
           role: emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
           tier: 'Regular Member',
           avatar_url: null,
@@ -209,6 +215,7 @@ const useAuthStore = create((set, get) => ({
         email: emailClean,
         password_hash: data.password,
         phone_number: data.phone_number,
+        birth_date: data.birth_date || null,
         role: emailClean === 'admin@court.in' || emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
         tier: 'Regular Member',
         avatar_url: null,
@@ -286,6 +293,7 @@ const useAuthStore = create((set, get) => ({
       }
       if (updatedData.full_name !== undefined) payload.full_name = updatedData.full_name
       if (updatedData.phone_number !== undefined) payload.phone_number = updatedData.phone_number
+      if (updatedData.birth_date !== undefined) payload.birth_date = updatedData.birth_date
       if (updatedData.avatar_url !== undefined) payload.avatar_url = updatedData.avatar_url
       if (updatedData.tier !== undefined) payload.tier = updatedData.tier
 
@@ -303,7 +311,7 @@ const useAuthStore = create((set, get) => ({
         const fullUser = {
           ...updatedUser,
           ...savedDbUser,
-          birth_date: updatedData.birth_date || updatedUser.birth_date || localStorage.getItem('courtin_birthdate_' + emailKey)
+          birth_date: savedDbUser.birth_date || updatedData.birth_date || updatedUser.birth_date
         }
         localStorage.setItem('courtin_user', JSON.stringify(fullUser))
         set({ user: fullUser })
@@ -336,7 +344,7 @@ const useAuthStore = create((set, get) => ({
           const mergedUser = {
             ...parsed,
             ...dbUser,
-            birth_date: storedBirthDate || parsed.birth_date || '1998-08-15'
+            birth_date: dbUser.birth_date || storedBirthDate || parsed.birth_date || '1998-08-15'
           }
           localStorage.setItem('courtin_user', JSON.stringify(mergedUser))
           if (mergedUser.avatar_url) {
@@ -384,7 +392,7 @@ const useAuthStore = create((set, get) => ({
               const storedBirthDate = localStorage.getItem('courtin_birthdate_' + emailClean)
               const mergedUser = {
                 ...dbUser,
-                birth_date: storedBirthDate || dbUser.birth_date || '1998-08-15',
+                birth_date: dbUser.birth_date || storedBirthDate || '1998-08-15',
               }
               localStorage.setItem('courtin_user', JSON.stringify(mergedUser))
               if (mergedUser.avatar_url) {
