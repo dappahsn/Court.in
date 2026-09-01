@@ -2,11 +2,12 @@ import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   User, Shield, Sliders, CheckCircle2, Phone,
-  Mail, Calendar, Camera, Trash2, AlertCircle
+  Mail, Camera, Trash2, AlertCircle
 } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import SportIcon from '../components/SportIcon'
 import { compressAvatar } from '../utils/imageCompressor'
+import BirthDatePicker from '../components/BirthDatePicker'
 
 export default function ProfilePage() {
   const { user, updateProfile, isAuthenticated } = useAuthStore()
@@ -347,15 +348,10 @@ export default function ProfilePage() {
                     <label className="block text-xs font-bold text-text-muted uppercase">
                       Tanggal Lahir
                     </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
-                      <input
-                        type="date"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none"
-                      />
-                    </div>
+                    <BirthDatePicker
+                      value={birthDate}
+                      onChange={setBirthDate}
+                    />
                   </div>
                 </div>
               </form>
