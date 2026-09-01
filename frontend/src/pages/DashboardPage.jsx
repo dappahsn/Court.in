@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar, Clock, QrCode, Star, CheckCircle2,
-  AlertCircle, X, Ticket, Lock, ArrowRight
+  AlertCircle, X, Ticket, Lock, ArrowRight, Sparkles
 } from 'lucide-react'
 import useBookingStore from '../stores/bookingStore'
 import useAuthStore from '../stores/authStore'
@@ -24,6 +24,8 @@ export default function DashboardPage() {
   const [ratingInput, setRatingInput] = useState(5)
   const [commentInput, setCommentInput] = useState('')
   const [reviewFeedback, setReviewFeedback] = useState(null)
+  const [thankYouModalOpen, setThankYouModalOpen] = useState(false)
+  const [submittedReviewData, setSubmittedReviewData] = useState(null)
 
   // Filter bookings by status & date
   const upcomingBookings = bookings.filter((b) => b.status !== 'COMPLETED' && b.status !== 'CANCELLED')
@@ -68,11 +70,15 @@ export default function DashboardPage() {
         action_url: '/admin/reviews',
       })
 
-      setReviewFeedback({ success: true, message: res.message })
-      setTimeout(() => {
-        setReviewModalOpen(false)
-        setReviewBooking(null)
-      }, 1500)
+      setSubmittedReviewData({
+        court_name: reviewBooking.court_name,
+        rating: ratingInput,
+        comment: commentText,
+      })
+      setReviewModalOpen(false)
+      setReviewBooking(null)
+      setCommentInput('')
+      setThankYouModalOpen(true)
     } else {
       setReviewFeedback({ success: false, message: res.message })
     }
@@ -443,6 +449,63 @@ export default function DashboardPage() {
                 Kirim Ulasan
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Thank You Review Modal (Popup Terima Kasih) ── */}
+      {thankYouModalOpen && submittedReviewData && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl border border-border space-y-5 animate-slide-in text-center relative">
+            <button
+              type="button"
+              onClick={() => setThankYouModalOpen(false)}
+              className="absolute top-5 right-5 text-text-muted hover:text-text-primary p-1 cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Glowing Trophy / Sparkles Icon */}
+            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+              <Sparkles size={32} className="animate-pulse" />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-block">
+                Ulasan Terverifikasi
+              </span>
+              <h3 className="text-xl font-extrabold text-text-primary">Terima Kasih! 🎉</h3>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Ulasan Anda untuk <strong>{submittedReviewData.court_name}</strong> telah berhasil diterbitkan dan sangat membantu pemain lain.
+              </p>
+            </div>
+
+            {/* Rating Snapshot Card */}
+            <div className="bg-surface-container-low rounded-2xl p-4 border border-border space-y-2 text-left">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    size={16}
+                    className={s <= submittedReviewData.rating ? 'fill-star-filled text-star-filled' : 'text-star-empty'}
+                  />
+                ))}
+                <span className="text-xs font-extrabold text-text-primary ml-1.5">
+                  {submittedReviewData.rating}.0 / 5.0
+                </span>
+              </div>
+              <p className="text-xs text-text-secondary italic line-clamp-2">
+                "{submittedReviewData.comment}"
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setThankYouModalOpen(false)}
+              className="w-full py-3 bg-primary hover:bg-primary-container text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              Tutup & Kembali ke Dashboard
+            </button>
           </div>
         </div>
       )}
