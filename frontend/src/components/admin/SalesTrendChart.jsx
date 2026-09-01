@@ -48,10 +48,10 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
   }, [chartData])
 
   const width = 640
-  const height = 210
+  const height = 220
   const paddingLeft = 55
-  const paddingRight = 20
-  const paddingTop = 25
+  const paddingRight = 35
+  const paddingTop = 35
   const paddingBottom = 35
 
   const chartWidth = width - paddingLeft - paddingRight
@@ -106,7 +106,7 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
   const active = hoveredIndex !== null ? points[hoveredIndex] : null
 
   return (
-    <div className="relative w-full overflow-hidden select-none">
+    <div className="relative w-full overflow-visible select-none pt-2 pb-1">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full h-auto overflow-visible"
@@ -228,10 +228,16 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
       {/* Floating Tooltip Box */}
       {active && (
         <div
-          className="absolute z-20 pointer-events-none bg-slate-900/95 text-white px-3.5 py-2 rounded-xl shadow-xl border border-slate-700 text-xs transform -translate-x-1/2 -translate-y-full transition-transform duration-75 animate-scale-in"
+          className={`absolute z-30 pointer-events-none bg-slate-900/95 text-white px-3.5 py-2 rounded-xl shadow-xl border border-slate-700 text-xs transition-transform duration-75 animate-scale-in whitespace-nowrap ${
+            hoveredIndex >= points.length - 2
+              ? 'transform -translate-x-[92%] -translate-y-[115%]'
+              : hoveredIndex <= 1
+              ? 'transform -translate-x-[8%] -translate-y-[115%]'
+              : 'transform -translate-x-1/2 -translate-y-[115%]'
+          }`}
           style={{
             left: `${(active.x / width) * 100}%`,
-            top: `${(active.y / height) * 100 - 4}%`,
+            top: `${(active.y / height) * 100}%`,
           }}
         >
           <div className="flex items-center gap-1.5 font-bold text-[11px] text-slate-300">

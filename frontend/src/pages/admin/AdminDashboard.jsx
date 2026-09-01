@@ -117,7 +117,7 @@ export default function AdminDashboard() {
   }, [bookings, courts])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-1">
       {/* ── Welcome & Time Filter Banner ── */}
       <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
