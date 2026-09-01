@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import api from '../lib/api'
+import { supabase } from '../lib/supabaseClient'
 
 // Initial Default Super Admin for Venue Management
 const DEFAULT_ADMIN = {
-  id: 'usr-admin-master',
+  id: '3817ead0-6ceb-4337-bfb7-fd7e9d8a2a32',
   full_name: 'Muhammad Daffa Husen',
   email: 'admin@court.in',
-  phone_number: '081234567890',
+  phone_number: '0812-3456-7890',
   role: 'ADMIN',
   tier: 'Owner / Super Admin',
   joined_date: 'Januari 2024',
@@ -39,7 +39,7 @@ const saveRegisteredUser = (user, password) => {
   try {
     localStorage.setItem('courtin_registered_users', JSON.stringify(users))
   } catch (e) {
-    console.error('Failed to save registered user', e)
+    console.error('Failed to save registered user locally', e)
   }
 }
 
@@ -49,54 +49,37 @@ try {
   const raw = localStorage.getItem('courtin_user')
   if (raw) {
     savedUser = JSON.parse(raw)
-    // Enrich with stored avatar if available
-    if (savedUser?.email) {
-      const storedAvatar = localStorage.getItem('courtin_avatar_' + savedUser.email.toLowerCase())
-      if (storedAvatar) {
-        savedUser.avatar_url = storedAvatar
-      }
-    }
   }
 } catch {
   savedUser = null
 }
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: savedUser,
   token: savedToken || null,
   isAuthenticated: !!savedToken && !!savedUser,
   isLoading: false,
 
   /**
-   * Real Login for both Customers and Admin
+   * Real Cloud Login via Supabase PostgreSQL
    */
   login: async (email, password) => {
     set({ isLoading: true })
     const emailClean = (email || '').trim().toLowerCase()
-    const storedAvatar = localStorage.getItem('courtin_avatar_' + emailClean)
 
     try {
-      const res = await api.post('/auth/login', { email: emailClean, password })
-      const { token, user } = res.data
-      if (storedAvatar && !user.avatar_url) {
-        user.avatar_url = storedAvatar
-      }
-      localStorage.setItem('courtin_token', token)
-      localStorage.setItem('courtin_user', JSON.stringify(user))
-      saveRegisteredUser(user, password)
-      set({ user, token, isAuthenticated: true, isLoading: false })
-      return { success: true, user }
-    } catch {
-      // Offline / Local Auth validation
-      // 1. Check Super Admin credentials
+      // 1. Check Super Admin Special Case
       if (emailClean === 'admin@court.in') {
         if (password === 'Lampriet37!' || password === 'admin123' || password.length >= 6) {
-          const token = 'jwt_live_admin_' + Date.now()
-          const savedAdminProfile = localStorage.getItem('courtin_admin_profile')
-          const adminObj = savedAdminProfile ? JSON.parse(savedAdminProfile) : { ...DEFAULT_ADMIN }
-          if (storedAvatar) {
-            adminObj.avatar_url = storedAvatar
-          }
+          // Fetch or sync admin profile in Supabase
+          const { data: dbAdmin } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', 'admin@court.in')
+            .maybeSingle()
+
+          const adminObj = dbAdmin || { ...DEFAULT_ADMIN }
+          const token = 'jwt_cloud_admin_' + Date.now()
           localStorage.setItem('courtin_token', token)
           localStorage.setItem('courtin_user', JSON.stringify(adminObj))
           set({ user: adminObj, token, isAuthenticated: true, isLoading: false })
@@ -107,44 +90,62 @@ const useAuthStore = create((set) => ({
         }
       }
 
-      // 2. Check registered users list
-      const registered = getRegisteredUsers()
-      const found = registered.find((u) => u.email.toLowerCase() === emailClean)
-      if (found) {
-        if (found.password && found.password !== password) {
+      // 2. Query user from Supabase Cloud Database
+      const { data: dbUser, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', emailClean)
+        .maybeSingle()
+
+      if (!error && dbUser) {
+        if (dbUser.password_hash && dbUser.password_hash !== password) {
+          // If stored password doesn't match
           set({ isLoading: false })
           return { success: false, message: 'Kata sandi yang Anda masukkan salah.' }
         }
-        const userObj = { ...found }
-        delete userObj.password
-        if (storedAvatar) {
-          userObj.avatar_url = storedAvatar
-        }
-        const token = 'jwt_live_user_' + Date.now()
+
+        const userObj = { ...dbUser }
+        delete userObj.password_hash
+        const token = 'jwt_cloud_user_' + Date.now()
         localStorage.setItem('courtin_token', token)
         localStorage.setItem('courtin_user', JSON.stringify(userObj))
+        saveRegisteredUser(userObj, password)
         set({ user: userObj, token, isAuthenticated: true, isLoading: false })
         return { success: true, user: userObj }
       }
 
-      // 3. If password meets minimum length, create and log in as real user
+      // 3. If user not in Supabase yet, create into Supabase Cloud
       if (password && password.length >= 6) {
+        const newId = crypto.randomUUID()
+        const now = new Date().toISOString()
         const newUser = {
-          id: 'usr_' + Date.now(),
+          id: newId,
           full_name: emailClean.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
           email: emailClean,
+          password_hash: password,
           phone_number: '0812' + Math.floor(10000000 + Math.random() * 90000000),
           role: emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
           tier: 'Regular Member',
-          joined_date: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-          avatar_url: storedAvatar || null,
+          avatar_url: null,
+          created_at: now,
+          updated_at: now,
         }
-        saveRegisteredUser(newUser, password)
-        const token = 'jwt_live_user_' + Date.now()
+
+        const { data: createdUser, error: insertError } = await supabase
+          .from('users')
+          .insert([newUser])
+          .select()
+          .single()
+
+        const finalUser = (!insertError && createdUser) ? createdUser : newUser
+        delete finalUser.password_hash
+
+        const token = 'jwt_cloud_user_' + Date.now()
         localStorage.setItem('courtin_token', token)
-        localStorage.setItem('courtin_user', JSON.stringify(newUser))
-        set({ user: newUser, token, isAuthenticated: true, isLoading: false })
-        return { success: true, user: newUser }
+        localStorage.setItem('courtin_user', JSON.stringify(finalUser))
+        saveRegisteredUser(finalUser, password)
+        set({ user: finalUser, token, isAuthenticated: true, isLoading: false })
+        return { success: true, user: finalUser }
       }
 
       set({ isLoading: false })
@@ -152,49 +153,71 @@ const useAuthStore = create((set) => ({
         success: false,
         message: 'Akun tidak ditemukan. Silakan daftar akun baru atau periksa kata sandi.',
       }
+    } catch (err) {
+      console.error('Login error:', err)
+      set({ isLoading: false })
+      return {
+        success: false,
+        message: 'Terjadi kesalahan saat menghubungkan ke cloud server.',
+      }
     }
   },
 
   /**
-   * Real Register for Customers
+   * Real Cloud Register via Supabase
    */
   register: async (data) => {
     set({ isLoading: true })
+    const emailClean = (data.email || '').trim().toLowerCase()
+
     try {
-      const res = await api.post('/auth/register', data)
-      const { token, user } = res.data
-      localStorage.setItem('courtin_token', token)
-      localStorage.setItem('courtin_user', JSON.stringify(user))
-      saveRegisteredUser(user, data.password)
-      set({ user, token, isAuthenticated: true, isLoading: false })
-      return { success: true, user }
-    } catch {
-      // Local Registration
-      const emailClean = (data.email || '').trim().toLowerCase()
-      const registered = getRegisteredUsers()
-      if (registered.some((u) => u.email.toLowerCase() === emailClean)) {
+      // 1. Check if email already exists in Supabase
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', emailClean)
+        .maybeSingle()
+
+      if (existingUser) {
         set({ isLoading: false })
-        return { success: false, message: 'Alamat email sudah terdaftar. Silakan masuk.' }
+        return { success: false, message: 'Alamat email sudah terdaftar. Silakan langsung masuk.' }
       }
 
-      const storedAvatar = localStorage.getItem('courtin_avatar_' + emailClean)
+      // 2. Create new user in Supabase
+      const newId = crypto.randomUUID()
+      const now = new Date().toISOString()
       const newUser = {
-        id: 'usr_' + Date.now(),
+        id: newId,
         full_name: data.full_name,
         email: emailClean,
+        password_hash: data.password,
         phone_number: data.phone_number,
         role: emailClean === 'admin@court.in' || emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
         tier: 'Regular Member',
-        joined_date: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-        avatar_url: storedAvatar || null,
+        avatar_url: null,
+        created_at: now,
+        updated_at: now,
       }
 
-      saveRegisteredUser(newUser, data.password)
-      const token = 'jwt_live_user_' + Date.now()
+      const { data: createdUser, error } = await supabase
+        .from('users')
+        .insert([newUser])
+        .select()
+        .single()
+
+      const finalUser = (!error && createdUser) ? createdUser : newUser
+      delete finalUser.password_hash
+
+      const token = 'jwt_cloud_user_' + Date.now()
       localStorage.setItem('courtin_token', token)
-      localStorage.setItem('courtin_user', JSON.stringify(newUser))
-      set({ user: newUser, token, isAuthenticated: true, isLoading: false })
-      return { success: true, user: newUser }
+      localStorage.setItem('courtin_user', JSON.stringify(finalUser))
+      saveRegisteredUser(finalUser, data.password)
+      set({ user: finalUser, token, isAuthenticated: true, isLoading: false })
+      return { success: true, user: finalUser }
+    } catch (err) {
+      console.error('Registration error:', err)
+      set({ isLoading: false })
+      return { success: false, message: 'Gagal mendaftarkan akun ke cloud database.' }
     }
   },
 
@@ -208,77 +231,72 @@ const useAuthStore = create((set) => ({
   },
 
   /**
-   * Update Profile & Avatar with Full Persistence across Logouts
+   * Update Profile & Avatar Directly on Supabase Cloud Database
    */
   updateProfile: async (updatedData) => {
-    let newUser
-    set((state) => {
-      newUser = { ...state.user, ...updatedData }
-      const emailKey = newUser.email?.toLowerCase()
+    const currentUser = get().user
+    if (!currentUser?.email) return
 
-      try {
-        localStorage.setItem('courtin_user', JSON.stringify(newUser))
+    const emailKey = currentUser.email.toLowerCase()
+    const updatedUser = { ...currentUser, ...updatedData }
 
-        if (emailKey) {
-          if (updatedData.avatar_url !== undefined) {
-            if (updatedData.avatar_url) {
-              localStorage.setItem('courtin_avatar_' + emailKey, updatedData.avatar_url)
-            } else {
-              localStorage.removeItem('courtin_avatar_' + emailKey)
-            }
-          }
-
-          // Persist to registered users store
-          const users = getRegisteredUsers()
-          const existingIdx = users.findIndex((u) => u.email?.toLowerCase() === emailKey)
-          if (existingIdx >= 0) {
-            users[existingIdx] = { ...users[existingIdx], ...newUser }
-          } else {
-            users.push(newUser)
-          }
-          localStorage.setItem('courtin_registered_users', JSON.stringify(users))
-
-          if (emailKey === 'admin@court.in') {
-            localStorage.setItem('courtin_admin_profile', JSON.stringify(newUser))
-          }
-        }
-      } catch (e) {
-        console.error('Failed to persist updated user profile', e)
-      }
-      return { user: newUser }
-    })
-
-    // Sync with backend API if online
+    // 1. Update local state immediately for snappy UI
+    set({ user: updatedUser })
     try {
-      await api.patch('/auth/profile', updatedData)
-    } catch {
-      // Local persistence already verified
+      localStorage.setItem('courtin_user', JSON.stringify(updatedUser))
+    } catch (e) {
+      console.error('Failed to update local user', e)
+    }
+
+    // 2. Sync directly to Supabase Cloud Database
+    try {
+      const payload = {
+        updated_at: new Date().toISOString(),
+      }
+      if (updatedData.full_name !== undefined) payload.full_name = updatedData.full_name
+      if (updatedData.phone_number !== undefined) payload.phone_number = updatedData.phone_number
+      if (updatedData.avatar_url !== undefined) payload.avatar_url = updatedData.avatar_url
+      if (updatedData.tier !== undefined) payload.tier = updatedData.tier
+
+      const { error } = await supabase
+        .from('users')
+        .update(payload)
+        .eq('email', emailKey)
+
+      if (error) {
+        console.error('Supabase profile sync error:', error)
+      } else {
+        console.log('Profile successfully synced to Supabase Cloud!')
+      }
+    } catch (err) {
+      console.error('Failed to sync profile to Supabase', err)
     }
   },
 
+  /**
+   * Fetch Fresh Profile from Supabase on App Startup
+   */
   fetchProfile: async () => {
+    const localUser = localStorage.getItem('courtin_user')
+    if (!localUser) return
+
     try {
-      const res = await api.get('/auth/me')
-      set({ user: res.data.user, isAuthenticated: true })
-    } catch {
-      const localToken = localStorage.getItem('courtin_token')
-      const localUser = localStorage.getItem('courtin_user')
-      if (localToken && localUser) {
-        try {
-          const parsed = JSON.parse(localUser)
-          if (parsed?.email) {
-            const storedAvatar = localStorage.getItem('courtin_avatar_' + parsed.email.toLowerCase())
-            if (storedAvatar) {
-              parsed.avatar_url = storedAvatar
-            }
-          }
-          set({ user: parsed, token: localToken, isAuthenticated: true })
-        } catch {
-          set({ user: null, token: null, isAuthenticated: false })
+      const parsed = JSON.parse(localUser)
+      if (parsed?.email) {
+        const { data: dbUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', parsed.email.toLowerCase())
+          .maybeSingle()
+
+        if (dbUser) {
+          delete dbUser.password_hash
+          localStorage.setItem('courtin_user', JSON.stringify(dbUser))
+          set({ user: dbUser, isAuthenticated: true })
         }
-      } else {
-        set({ user: null, token: null, isAuthenticated: false })
       }
+    } catch (err) {
+      console.error('Failed to fetch fresh profile', err)
     }
   },
 }))

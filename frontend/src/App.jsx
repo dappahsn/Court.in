@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
+import useAuthStore from './stores/authStore'
 
 // Customer Pages
 import HomePage from './pages/HomePage'
@@ -30,6 +32,12 @@ import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminReviews from './pages/admin/AdminReviews'
 
 function App() {
+  const { fetchProfile } = useAuthStore()
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
+
   return (
     <Routes>
       {/* ── Customer Layout & Public/Customer Routes ── */}
@@ -71,7 +79,7 @@ function App() {
         />
       </Route>
 
-      {/* ── Admin Business Portal (Dedicated Enterprise Layout & Protected) ── */}
+      {/* ── Admin Management Portal (Protected with adminOnly) ── */}
       <Route
         path="/admin"
         element={
@@ -85,11 +93,11 @@ function App() {
         <Route path="schedule" element={<AdminSchedule />} />
         <Route path="courts" element={<AdminCourts />} />
         <Route path="customers" element={<AdminCustomers />} />
-        <Route path="reviews" element={<AdminReviews />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="staff" element={<AdminStaff />} />
-        <Route path="notifications" element={<AdminNotifications />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="reviews" element={<AdminReviews />} />
       </Route>
     </Routes>
   )
