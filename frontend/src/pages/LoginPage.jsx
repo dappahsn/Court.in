@@ -9,9 +9,10 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const redirectPath = searchParams.get('redirect') || '/dashboard'
 
-  const { login, loginDemo, isLoading, isAuthenticated } = useAuthStore()
+  const isAdminTarget = redirectPath.startsWith('/admin')
+  const { login, loginDemo, loginAdminDemo, isLoading, isAuthenticated } = useAuthStore()
 
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(isAdminTarget ? 'admin@court.in' : '')
   const [password, setPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -40,7 +41,11 @@ export default function LoginPage() {
   }
 
   const handleDemoLogin = () => {
-    loginDemo()
+    if (isAdminTarget) {
+      loginAdminDemo()
+    } else {
+      loginDemo()
+    }
     navigate(redirectPath, { replace: true })
   }
 
@@ -54,10 +59,12 @@ export default function LoginPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-              Masuk ke Akun Anda
+              {isAdminTarget ? 'Login Portal Pengelola' : 'Masuk ke Akun Anda'}
             </h1>
             <p className="text-sm text-text-secondary mt-1">
-              Booking lapangan cepat & kelola tiket Anda
+              {isAdminTarget
+                ? 'Autentikasi keamanan untuk mengakses operasional venue'
+                : 'Booking lapangan cepat & kelola tiket Anda'}
             </p>
           </div>
         </div>
@@ -69,14 +76,18 @@ export default function LoginPage() {
             <span>Mode Demo Cepat</span>
           </div>
           <p className="text-xs text-text-secondary">
-            Coba semua alur booking & ulasan langsung:
+            {isAdminTarget
+              ? 'Akses instan ke seluruh modul admin & kasir venue:'
+              : 'Coba semua alur booking & ulasan langsung:'}
           </p>
           <button
             type="button"
             onClick={handleDemoLogin}
             className="w-full py-2 bg-primary hover:bg-primary-container text-white font-semibold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            Masuk dengan Akun Demo (Daffa Husen)
+            {isAdminTarget
+              ? 'Masuk sebagai Super Admin (admin@court.in)'
+              : 'Masuk dengan Akun Demo (Daffa Husen)'}
           </button>
         </div>
 

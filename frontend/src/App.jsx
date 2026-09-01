@@ -71,8 +71,15 @@ function App() {
         />
       </Route>
 
-      {/* ── Admin Business Portal (Dedicated Enterprise Layout) ── */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* ── Admin Business Portal (Dedicated Enterprise Layout & Protected) ── */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute adminOnly={true}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="bookings" element={<AdminBookings />} />
         <Route path="schedule" element={<AdminSchedule />} />
