@@ -1,16 +1,17 @@
 import { useState, useMemo } from 'react'
 import {
   Search, CheckCircle2,
-  Download, Eye, X
+  Download, Eye, X, Trash2, AlertTriangle
 } from 'lucide-react'
 import useBookingStore from '../../stores/bookingStore'
 
 export default function AdminBookings() {
-  const { bookings, checkInBooking, confirmCashPayment, cancelBookingByAdmin } = useBookingStore()
+  const { bookings, checkInBooking, confirmCashPayment, deleteBooking } = useBookingStore()
 
   const [filterStatus, setFilterStatus] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
 
   const showToast = (msg, type = 'success') => {
@@ -51,6 +52,13 @@ export default function AdminBookings() {
     link.click()
     document.body.removeChild(link)
     showToast('Data booking berhasil diekspor ke CSV!')
+  }
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return
+    const res = deleteBooking(deleteTarget.id)
+    showToast(res.message, 'warning')
+    setDeleteTarget(null)
   }
 
   return (
@@ -98,9 +106,9 @@ export default function AdminBookings() {
                 key={st.id}
                 type="button"
                 onClick={() => setFilterStatus(st.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   filterStatus === st.id
-                    ? 'bg-primary text-white shadow-2xs font-bold'
+                    ? 'bg-primary text-white shadow-2xs'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
@@ -110,71 +118,79 @@ export default function AdminBookings() {
           </div>
 
           {/* Search Box */}
-          <div className="relative w-full sm:w-80">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+          <div className="relative w-full sm:w-72">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari ID tiket, nama, WhatsApp..."
-              className="w-full pl-9 pr-4 py-2 bg-surface-container-low border border-border rounded-xl text-xs text-text-primary focus:bg-surface focus:border-primary focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 bg-surface-container-low border border-border rounded-xl text-xs text-text-primary placeholder:text-text-muted focus:bg-surface focus:border-primary focus:outline-none"
             />
           </div>
         </div>
+      </div>
 
-        {/* Table */}
+      {/* Bookings Table */}
+      <div className="bg-surface rounded-3xl border border-border shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-container-low text-text-muted uppercase tracking-wider font-bold border-b border-border">
-              <tr>
-                <th className="py-3.5 px-4">No. Tiket</th>
-                <th className="py-3.5 px-4">Pelanggan</th>
-                <th className="py-3.5 px-4">Lapangan & Olahraga</th>
-                <th className="py-3.5 px-4">Jadwal Bermain</th>
-                <th className="py-3.5 px-4">Total & Metode</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right">Aksi Kasir</th>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-surface-container-low/50 text-text-muted font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-4 px-4 sm:px-6">No. Tiket</th>
+                <th className="py-4 px-4">Pelanggan</th>
+                <th className="py-4 px-4">Lapangan & Olahraga</th>
+                <th className="py-4 px-4">Jadwal Bermain</th>
+                <th className="py-4 px-4">Total & Metode</th>
+                <th className="py-4 px-4">Status</th>
+                <th className="py-4 px-4 text-right">Aksi Kasir</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {filteredBookings.length > 0 ? (
                 filteredBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-surface-container-low/50 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-text-primary">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBooking(b)}
-                        className="hover:text-primary hover:underline text-left cursor-pointer"
-                      >
-                        {b.id}
-                      </button>
+                  <tr key={b.id} className="hover:bg-surface-container-low/60 transition-colors">
+                    <td className="py-3.5 px-4 sm:px-6 font-mono font-bold text-text-primary">
+                      {b.id}
                     </td>
                     <td className="py-3.5 px-4">
-                      <p className="font-semibold text-text-primary">{b.customer_name}</p>
-                      <p className="text-[11px] text-text-muted">{b.customer_phone}</p>
+                      <div>
+                        <p className="font-bold text-text-primary">{b.customer_name}</p>
+                        <p className="text-[11px] text-text-muted">{b.customer_phone}</p>
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-medium text-text-primary block line-clamp-1">{b.court_name}</span>
-                      <span className="text-[10px] text-primary uppercase font-bold">{b.court_type}</span>
+                      <div>
+                        <p className="font-semibold text-text-primary">{b.court_name || 'Lapangan Court.in'}</p>
+                        <span className="text-[10px] font-extrabold text-primary uppercase">
+                          {b.court_type || 'FUTSAL'}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <p className="font-medium text-text-primary">{b.booking_date}</p>
-                      <p className="text-[11px] text-text-muted">{b.start_time} - {b.end_time} WIB</p>
+                      <p className="font-bold text-text-primary">{b.booking_date || '-'}</p>
+                      <p className="text-[11px] text-text-muted font-medium">
+                        {b.start_time && b.end_time ? `${b.start_time} - ${b.end_time} WIB` : '- WIB'}
+                      </p>
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <p className="font-bold text-text-primary">Rp{b.total_price.toLocaleString('id-ID')}</p>
-                      <p className="text-[10px] text-text-muted uppercase font-semibold">{b.payment_method}</p>
+                      <p className="font-extrabold text-text-primary">
+                        Rp{(b.total_price || 0).toLocaleString('id-ID')}
+                      </p>
+                      <span className="text-[10px] uppercase font-bold text-text-muted">
+                        {b.payment_method || 'CASH'}
+                      </span>
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <span
                         className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
                           b.status === 'PAID'
-                            ? 'bg-emerald-50 text-emerald-700'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-400'
                             : b.status === 'COMPLETED'
-                            ? 'bg-primary-light text-primary'
+                            ? 'bg-primary-light text-primary border border-primary/20 dark:bg-primary/20'
                             : b.status === 'PAY_AT_VENUE'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-rose-50 text-rose-700'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/30 dark:text-rose-400'
                         }`}
                       >
                         {b.status === 'PAID'
@@ -219,26 +235,20 @@ export default function AdminBookings() {
                         <button
                           type="button"
                           onClick={() => setSelectedBooking(b)}
-                          className="p-1.5 rounded-lg border border-border text-text-secondary hover:bg-surface-container-low hover:text-text-primary"
+                          className="p-1.5 rounded-lg border border-border text-text-secondary hover:bg-surface-container-low hover:text-text-primary cursor-pointer"
                           title="Lihat Detail"
                         >
                           <Eye size={14} />
                         </button>
 
-                        {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Batalkan pesanan tiket ${b.id}?`)) {
-                                const res = cancelBookingByAdmin(b.id)
-                                showToast(res.message, 'warning')
-                              }
-                            }}
-                            className="px-2 py-1 rounded-lg border border-border text-danger hover:bg-danger/10 text-[11px] font-semibold cursor-pointer"
-                          >
-                            Batalkan
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(b)}
+                          className="p-1.5 rounded-lg border border-border text-danger hover:bg-danger/10 hover:border-danger/30 transition-colors cursor-pointer"
+                          title="Hapus Data Booking"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -255,28 +265,78 @@ export default function AdminBookings() {
         </div>
       </div>
 
-      {/* Detail Booking Drawer/Modal */}
+      {/* Modal Konfirmasi Hapus Booking */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-border space-y-5 animate-slide-in text-center relative">
+            <div className="w-14 h-14 rounded-2xl bg-danger/10 text-danger flex items-center justify-center mx-auto ring-8 ring-danger/5">
+              <AlertTriangle size={28} />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-extrabold text-text-primary">
+                Hapus Data Booking?
+              </h3>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Apakah Anda yakin ingin menghapus data booking <strong className="text-text-primary font-mono">{deleteTarget.id}</strong> atas nama <strong className="text-text-primary">{deleteTarget.customer_name}</strong>?
+              </p>
+            </div>
+
+            <div className="p-3 bg-surface-container-low rounded-2xl border border-border text-left space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Lapangan</span>
+                <span className="font-bold text-text-primary">{deleteTarget.court_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Total Bayar</span>
+                <span className="font-bold text-primary">Rp{(deleteTarget.total_price || 0).toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="w-full py-2.5 rounded-xl border border-border text-text-secondary font-bold text-xs hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="w-full py-2.5 rounded-xl bg-danger hover:bg-danger/90 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Trash2 size={13} />
+                <span>Ya, Hapus</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Booking */}
       {selectedBooking && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-surface w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-border space-y-6 animate-slide-in relative">
             <button
               type="button"
               onClick={() => setSelectedBooking(null)}
-              className="absolute top-5 right-5 text-text-muted hover:text-text-primary"
+              className="absolute top-5 right-5 text-text-muted hover:text-text-primary cursor-pointer"
             >
               <X size={18} />
             </button>
 
-            <div>
-              <span className="text-[11px] font-bold text-primary uppercase tracking-wider">
-                Detail E-Ticket Reservasi
-              </span>
-              <h2 className="text-xl font-extrabold text-text-primary font-mono mt-0.5">
-                {selectedBooking.id}
-              </h2>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary-light text-primary flex items-center justify-center font-bold">
+                ✓
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-text-primary">Detail Reservasi Tiket</h3>
+                <p className="text-xs text-text-muted font-mono">{selectedBooking.id}</p>
+              </div>
             </div>
 
-            <div className="bg-surface-container-low rounded-2xl p-5 border border-border space-y-3 text-xs">
+            <div className="bg-surface-container-low rounded-2xl p-4 border border-border space-y-2.5 text-xs">
               <div className="flex justify-between border-b border-border/80 pb-2.5">
                 <span className="text-text-muted">Nama Pelanggan</span>
                 <span className="font-bold text-text-primary">{selectedBooking.customer_name}</span>
@@ -302,7 +362,7 @@ export default function AdminBookings() {
               <div className="flex justify-between items-center pt-1">
                 <span className="text-text-muted font-bold">Total Pembayaran</span>
                 <span className="text-base font-extrabold text-primary">
-                  Rp{selectedBooking.total_price.toLocaleString('id-ID')}
+                  Rp{(selectedBooking.total_price || 0).toLocaleString('id-ID')}
                 </span>
               </div>
             </div>
@@ -337,7 +397,7 @@ export default function AdminBookings() {
               <button
                 type="button"
                 onClick={() => setSelectedBooking(null)}
-                className="px-4 py-2.5 border border-border rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-container-low"
+                className="px-4 py-2.5 border border-border rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-container-low cursor-pointer"
               >
                 Tutup
               </button>

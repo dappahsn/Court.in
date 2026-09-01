@@ -4,7 +4,15 @@ const loadSavedBookings = () => {
   try {
     const saved = localStorage.getItem('courtin_bookings')
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      // Automatically clean legacy broken test orders without time slots
+      const cleaned = parsed.filter(
+        (b) => b.id !== 'TKT-20260901-8446' && b.id !== 'TKT-20260901-6326'
+      )
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem('courtin_bookings', JSON.stringify(cleaned))
+      }
+      return cleaned
     }
   } catch (e) {
     console.error('Failed to load bookings from localStorage', e)
@@ -96,6 +104,18 @@ const useBookingStore = create((set, get) => ({
       console.error('Failed to cancel booking', e)
     }
     return { success: true, message: `Pesanan ${id} berhasil dibatalkan.` }
+  },
+
+  // Admin Action: Delete booking permanently
+  deleteBooking: (id) => {
+    const updated = get().bookings.filter((b) => b.id !== id)
+    set({ bookings: updated })
+    try {
+      localStorage.setItem('courtin_bookings', JSON.stringify(updated))
+    } catch (e) {
+      console.error('Failed to delete booking from localStorage', e)
+    }
+    return { success: true, message: `Data booking ${id} berhasil dihapus permanen.` }
   },
 
   // Update status (e.g. from PENDING to PAID when QRIS is paid)
