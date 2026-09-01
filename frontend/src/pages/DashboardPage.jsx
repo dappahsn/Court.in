@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar, Clock, QrCode, Star, CheckCircle2,
-  AlertCircle, X, Ticket, Lock, ArrowRight, Sparkles
+  AlertCircle, X, Ticket, Lock, ArrowRight, Sparkles, Edit3
 } from 'lucide-react'
 import useBookingStore from '../stores/bookingStore'
 import useAuthStore from '../stores/authStore'
@@ -33,8 +33,8 @@ export default function DashboardPage() {
 
   const openReviewModal = (booking) => {
     setReviewBooking(booking)
-    setRatingInput(5)
-    setCommentInput('')
+    setRatingInput(booking.user_rating || 5)
+    setCommentInput(booking.user_comment || '')
     setReviewFeedback(null)
     setReviewModalOpen(true)
   }
@@ -333,17 +333,17 @@ export default function DashboardPage() {
                     {ticket.reviewed ? (
                       <button
                         type="button"
-                        disabled
-                        className="py-2 px-4 rounded-xl bg-surface-container text-text-muted text-xs font-semibold cursor-not-allowed flex items-center gap-1.5"
+                        onClick={() => openReviewModal(ticket)}
+                        className="py-2 px-3.5 rounded-xl border border-primary/40 bg-primary-light/50 hover:bg-primary hover:text-white text-primary text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                       >
-                        <CheckCircle2 size={14} className="text-primary" />
-                        <span>Sudah Diulas</span>
+                        <Edit3 size={13} />
+                        <span>Edit Ulasan</span>
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={() => openReviewModal(ticket)}
-                        className="py-2 px-4 rounded-xl border border-primary text-primary hover:bg-primary hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="py-2 px-4 rounded-xl border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                       >
                         <Star size={14} className="text-star-filled fill-star-filled" />
                         <span>Beri Ulasan</span>
@@ -376,15 +376,17 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setReviewModalOpen(false)}
-              className="absolute top-5 right-5 text-text-muted hover:text-text-primary"
+              className="absolute top-5 right-5 text-text-muted hover:text-text-primary p-1 cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div>
-              <span className="text-xs font-bold text-primary uppercase">Beri Penilaian</span>
+              <span className="text-xs font-bold text-primary uppercase">
+                {reviewBooking.reviewed ? 'Edit Penilaian' : 'Beri Penilaian'}
+              </span>
               <h2 className="text-xl font-bold text-text-primary mt-0.5">
-                Ulas Pengalaman Bermain
+                {reviewBooking.reviewed ? 'Edit Bintang & Ulasan' : 'Ulas Pengalaman Bermain'}
               </h2>
               <p className="text-xs text-text-secondary line-clamp-1">
                 {reviewBooking.court_name}
@@ -454,7 +456,7 @@ export default function DashboardPage() {
                 type="submit"
                 className="w-full py-3 bg-primary hover:bg-primary-container text-white font-semibold text-sm rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                Kirim Ulasan
+                {reviewBooking.reviewed ? 'Simpan Perubahan Ulasan' : 'Kirim Ulasan'}
               </button>
             </form>
           </div>
