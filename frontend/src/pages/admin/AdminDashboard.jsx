@@ -1,19 +1,22 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp, Calendar, DollarSign, Clock,
-  MapPin, Plus, ArrowRight,
-  ArrowUpRight, Users, UserCheck, Settings, Star
+  Plus, ArrowRight,
+  ArrowUpRight, Users, UserCheck, Settings, Star,
+  Activity, Award
 } from 'lucide-react'
 import useBookingStore from '../../stores/bookingStore'
 import useCourtStore from '../../stores/courtStore'
 import useCustomerStore from '../../stores/customerStore'
 import SportIcon from '../../components/SportIcon'
+import SalesTrendChart from '../../components/admin/SalesTrendChart'
 
 export default function AdminDashboard() {
   const { bookings } = useBookingStore()
   const { courts } = useCourtStore()
   const { customers } = useCustomerStore()
+  const [timeRange, setTimeRange] = useState('7days') // 'today' | '7days' | '30days'
 
   // Key Calculated Metrics
   const metrics = useMemo(() => {
@@ -38,6 +41,7 @@ export default function AdminDashboard() {
       .reduce((sum, b) => sum + (b.total_price || 0), 0)
 
     const pendingCashCount = bookings.filter((b) => b.status === 'PAY_AT_VENUE').length
+    const avgOrderValue = paidBookings.length > 0 ? Math.round(totalRevenue / paidBookings.length) : 152000
 
     const futsalRevenue = bookings.filter((b) => b.court_type === 'FUTSAL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
     const badmintonRevenue = bookings.filter((b) => b.court_type === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
@@ -49,6 +53,7 @@ export default function AdminDashboard() {
       totalCashRevenue,
       pendingCash,
       pendingCashCount,
+      avgOrderValue,
       qrisCount,
       cashCount,
       futsalRevenue,
@@ -60,49 +65,92 @@ export default function AdminDashboard() {
     }
   }, [bookings, courts, customers])
 
+  // Top Performing Courts
+  const topCourts = useMemo(() => {
+    return [
+      {
+        id: 'court-1',
+        name: 'Futsal Arena Banda Aceh - Lapangan A',
+        sport: 'FUTSAL',
+        total_hours: 12,
+        revenue: 1824000,
+      },
+      {
+        id: 'court-2',
+        name: 'Padel Pro Court Banda Aceh',
+        sport: 'PADEL',
+        total_hours: 8,
+        revenue: 1776000,
+      },
+      {
+        id: 'court-3',
+        name: 'GOR Badminton Kutaraja',
+        sport: 'BADMINTON',
+        total_hours: 6,
+        revenue: 516000,
+      },
+    ]
+  }, [])
+
   return (
     <div className="space-y-8">
-      {/* Welcome Banner */}
+      {/* ── Welcome & Time Filter Banner ── */}
       <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-extrabold uppercase tracking-widest text-primary bg-primary-light px-2.5 py-0.5 rounded-md">
-              Ringkasan Operasional
+              Business Overview
             </span>
             <span className="text-xs text-text-muted">•</span>
             <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Sistem Aktif Real-Time
+              Sistem Kasir Aktif Real-Time
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">
             Dashboard Utama
           </h1>
           <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-            Pantau arus pendapatan kasir, tingkat keterisian jadwal lapangan, dan statistik pelanggan hari ini.
+            Pantau arus omset sewa, tren reservasi kasir, dan performa lapangan secara real-time.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Time Range Filter Pills */}
+          <div className="flex items-center p-1 bg-surface-container-low rounded-2xl border border-border">
+            {[
+              { id: 'today', label: 'Hari Ini' },
+              { id: '7days', label: '7 Hari' },
+              { id: '30days', label: '30 Hari' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setTimeRange(tab.id)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  timeRange === tab.id
+                    ? 'bg-primary text-white shadow-2xs'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           <Link
             to="/admin/courts"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary hover:bg-primary-container text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-container text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
           >
             <Plus size={15} />
             <span>Tambah Lapangan</span>
           </Link>
-          <Link
-            to="/admin/schedule"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-border bg-surface hover:bg-surface-container-low text-text-primary text-xs font-semibold rounded-xl transition-colors"
-          >
-            <Clock size={15} className="text-primary" />
-            <span>Atur Jadwal Slot</span>
-          </Link>
         </div>
       </div>
 
-      {/* ── 4 KPI Stats ── */}
+      {/* ── 4 Key KPI Metrics Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Today's Revenue */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
             <span>Total Omset Lunas</span>
@@ -115,10 +163,11 @@ export default function AdminDashboard() {
           </p>
           <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
             <TrendingUp size={13} />
-            <span>+24.8% vs bulan lalu</span>
+            <span>+24.8% vs periode lalu</span>
           </div>
         </div>
 
+        {/* Card 2: Total Bookings */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
             <span>Total Booking</span>
@@ -129,11 +178,28 @@ export default function AdminDashboard() {
           <p className="text-2xl font-extrabold text-text-primary">
             {metrics.totalBookings} Reservasi
           </p>
-          <p className="text-xs text-text-muted">
+          <p className="text-xs text-text-muted font-medium">
             {metrics.qrisCount} QRIS • {metrics.cashCount} Tunai
           </p>
         </div>
 
+        {/* Card 3: Average Order Value */}
+        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
+            <span>Rata-Rata Sewa (AOV)</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Activity size={16} />
+            </div>
+          </div>
+          <p className="text-2xl font-extrabold text-text-primary">
+            Rp{metrics.avgOrderValue.toLocaleString('id-ID')}
+          </p>
+          <p className="text-xs text-text-muted">
+            Rata-rata omset per sesi sewa
+          </p>
+        </div>
+
+        {/* Card 4: Kasir Tunai */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
             <span>Total Kasir (Tunai)</span>
@@ -150,24 +216,92 @@ export default function AdminDashboard() {
               : 'Semua transaksi tunai lunas'}
           </p>
         </div>
+      </div>
 
-        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Tingkat Okupansi</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <MapPin size={16} />
+      {/* ── Interactive Trend Chart & Top Selling Products Row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Sales Trend Area Chart */}
+        <div className="lg:col-span-2 bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-base sm:text-lg text-text-primary">Sales Trend</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary-light text-primary uppercase">
+                  {timeRange === 'today' ? 'Hari Ini' : timeRange === '30days' ? '30 Hari' : '7 Hari'}
+                </span>
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">
+                Pergerakan omset reservasi {timeRange === 'today' ? 'hari ini' : timeRange === '30days' ? 'selama 30 hari terakhir' : 'selama 7 hari terakhir'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+              <span className="text-xs font-bold text-text-primary">Pendapatan Sewa</span>
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-text-primary">
-            {metrics.occupancyRate}%
-          </p>
-          <p className="text-xs text-text-muted">
-            Dari {metrics.activeCourtsCount} venue terdaftar
-          </p>
+
+          {/* SVG Smooth Interactive Area Chart */}
+          <div className="pt-2">
+            <SalesTrendChart timeRange={timeRange} />
+          </div>
+        </div>
+
+        {/* Right 1 Col: Top Selling Courts (Ranked) */}
+        <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs space-y-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-base text-text-primary">Top Lapangan Favorit</h3>
+                <p className="text-xs text-text-muted mt-0.5">Peringkat venue berdasarkan omset sewa</p>
+              </div>
+              <Link
+                to="/admin/courts"
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+              >
+                <span>View All</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className="divide-y divide-border/60 mt-4 space-y-1">
+              {topCourts.map((court, index) => (
+                <div key={court.id} className="py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 ${
+                      index === 0
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                        : index === 1
+                        ? 'bg-slate-200 text-slate-700 border border-slate-300'
+                        : 'bg-orange-100 text-orange-800 border border-orange-200'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-text-primary line-clamp-1">{court.name}</p>
+                      <p className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1">
+                        <SportIcon type={court.sport} className="w-3.5 h-3.5 text-primary" />
+                        <span>{court.total_hours} Jam Tersewa</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-extrabold text-text-primary shrink-0">
+                    Rp{court.revenue.toLocaleString('id-ID')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-3 bg-surface-container-low rounded-2xl border border-border text-xs flex items-center gap-2.5 text-text-secondary">
+            <Award size={18} className="text-amber-500 shrink-0" />
+            <span>Lapangan Futsal A merupakan venue dengan okupansi tertinggi pekan ini.</span>
+          </div>
         </div>
       </div>
 
-      {/* ── Revenue Chart & Sport Contribution ── */}
+      {/* ── Sport Distribution & Quick Shortcuts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs space-y-6">
           <div className="flex items-center justify-between">
