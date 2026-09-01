@@ -10,18 +10,22 @@ export default function LoginPage() {
   const redirectPath = searchParams.get('redirect') || '/dashboard'
 
   const isAdminTarget = redirectPath.startsWith('/admin')
-  const { login, isLoading, isAuthenticated } = useAuthStore()
+  const { user, login, isLoading, isAuthenticated } = useAuthStore()
 
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(isAdminTarget ? 'admin@court.in' : '')
   const [password, setPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated as the correct role
   useEffect(() => {
     if (isAuthenticated) {
+      if (isAdminTarget && user?.role !== 'ADMIN') {
+        // Logged in as customer, but want to access admin -> don't redirect, let them authenticate as admin
+        return
+      }
       navigate(redirectPath, { replace: true })
     }
-  }, [isAuthenticated, navigate, redirectPath])
+  }, [isAuthenticated, user, navigate, redirectPath, isAdminTarget])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
