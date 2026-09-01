@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState(() => user?.full_name || '')
   const [email, setEmail] = useState(() => user?.email || '')
   const [phone, setPhone] = useState(() => user?.phone_number || '')
-  const [birthDate, setBirthDate] = useState('1998-08-15')
+  const [birthDate, setBirthDate] = useState(() => user?.birth_date || (user?.email ? localStorage.getItem('courtin_birthdate_' + user.email.toLowerCase()) : null) || '1998-08-15')
   const [avatarUrl, setAvatarUrl] = useState(() => user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null))
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -31,6 +31,7 @@ export default function ProfilePage() {
     if (user?.email !== undefined) setEmail(user.email || '')
     if (user?.phone_number !== undefined) setPhone(user.phone_number || '')
     if (user?.avatar_url !== undefined) setAvatarUrl(user.avatar_url || null)
+    if (user?.birth_date !== undefined) setBirthDate(user.birth_date || '1998-08-15')
   }
 
   // Handle Photo File Selection
@@ -79,6 +80,7 @@ export default function ProfilePage() {
       full_name: fullName,
       email,
       phone_number: phone,
+      birth_date: birthDate,
       avatar_url: avatarUrl,
     })
     setSavedSuccess(true)

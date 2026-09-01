@@ -1,121 +1,138 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabaseClient'
 
-// Initial Default Super Admin for Venue Management
-const DEFAULT_ADMIN = {
-  id: '3817ead0-6ceb-4337-bfb7-fd7e9d8a2a32',
-  full_name: 'Muhammad Daffa Husen',
-  email: 'admin@court.in',
-  phone_number: '0812-3456-7890',
-  role: 'ADMIN',
-  tier: 'Owner / Super Admin',
-  joined_date: 'Januari 2024',
-  avatar_url: null,
-}
-
-// Helper to get registered users from localStorage
+/**
+ * Helper to get local stored user credentials
+ */
 const getRegisteredUsers = () => {
   try {
-    const raw = localStorage.getItem('courtin_registered_users')
-    return raw ? JSON.parse(raw) : []
-  } catch {
+    const saved = localStorage.getItem('courtin_registered_users')
+    return saved ? JSON.parse(saved) : []
+  } catch (e) {
+    console.error('Failed to parse registered users', e)
     return []
   }
 }
 
-const saveRegisteredUser = (user, password) => {
-  const users = getRegisteredUsers()
-  const existingIdx = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase())
-  const prevRecord = existingIdx >= 0 ? users[existingIdx] : {}
-  const record = { ...prevRecord, ...user }
-  if (password) {
-    record.password = password
-  }
-  if (existingIdx >= 0) {
-    users[existingIdx] = record
-  } else {
-    users.push(record)
-  }
+const saveRegisteredUser = (newUser, password) => {
   try {
-    localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+    const users = getRegisteredUsers()
+    const filtered = users.filter((u) => u.email.toLowerCase() !== newUser.email.toLowerCase())
+    filtered.push({ ...newUser, password_hash: password })
+    localStorage.setItem('courtin_registered_users', JSON.stringify(filtered))
   } catch (e) {
-    console.error('Failed to save registered user locally', e)
+    console.error('Failed to save user record', e)
   }
 }
 
-const savedToken = localStorage.getItem('courtin_token')
-let savedUser = null
-try {
-  const raw = localStorage.getItem('courtin_user')
-  if (raw) {
-    savedUser = JSON.parse(raw)
+// Initial state from localStorage
+const storedToken = localStorage.getItem('courtin_token')
+const storedUser = localStorage.getItem('courtin_user')
+
+let parsedUser = null
+if (storedUser) {
+  try {
+    parsedUser = JSON.parse(storedUser)
+  } catch (e) {
+    console.error('Failed to parse stored user', e)
   }
-} catch {
-  savedUser = null
 }
 
 const useAuthStore = create((set, get) => ({
-  user: savedUser,
-  token: savedToken || null,
-  isAuthenticated: !!savedToken && !!savedUser,
+  user: parsedUser,
+  token: storedToken,
+  isAuthenticated: !!(storedToken && parsedUser),
   isLoading: false,
 
   /**
-   * Real Cloud Login via Supabase PostgreSQL
+   * Real Cloud Login via Supabase
    */
   login: async (email, password) => {
     set({ isLoading: true })
     const emailClean = (email || '').trim().toLowerCase()
 
     try {
-      // 1. Check Super Admin Special Case
-      if (emailClean === 'admin@court.in') {
-        if (password === 'Lampriet37!' || password === 'admin123' || password.length >= 6) {
-          // Fetch or sync admin profile in Supabase
-          const { data: dbAdmin } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', 'admin@court.in')
-            .maybeSingle()
-
-          const adminObj = dbAdmin || { ...DEFAULT_ADMIN }
-          const token = 'jwt_cloud_admin_' + Date.now()
-          localStorage.setItem('courtin_token', token)
-          localStorage.setItem('courtin_user', JSON.stringify(adminObj))
-          set({ user: adminObj, token, isAuthenticated: true, isLoading: false })
-          return { success: true, user: adminObj }
-        } else {
-          set({ isLoading: false })
-          return { success: false, message: 'Kata sandi akun Admin tidak sesuai.' }
-        }
-      }
-
-      // 2. Query user from Supabase Cloud Database
+      // 1. Direct PostgreSQL query via Supabase
       const { data: dbUser, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', emailClean)
         .maybeSingle()
 
-      if (!error && dbUser) {
+      if (error) {
+        console.error('Supabase query error:', error)
+      }
+
+      // If user found in Supabase
+      if (dbUser) {
         if (dbUser.password_hash && dbUser.password_hash !== password) {
-          // If stored password doesn't match
           set({ isLoading: false })
-          return { success: false, message: 'Kata sandi yang Anda masukkan salah.' }
+          return { success: false, message: 'Kata sandi salah. Silakan coba kembali.' }
         }
 
         const userObj = { ...dbUser }
         delete userObj.password_hash
+
+        const storedBirthDate = localStorage.getItem('courtin_birthdate_' + emailClean)
+        if (storedBirthDate) userObj.birth_date = storedBirthDate
+
         const token = 'jwt_cloud_user_' + Date.now()
         localStorage.setItem('courtin_token', token)
         localStorage.setItem('courtin_user', JSON.stringify(userObj))
         saveRegisteredUser(userObj, password)
+
+        if (userObj.avatar_url) {
+          localStorage.setItem('courtin_avatar_' + emailClean, userObj.avatar_url)
+        }
+
         set({ user: userObj, token, isAuthenticated: true, isLoading: false })
         return { success: true, user: userObj }
       }
 
-      // 3. If user not in Supabase yet, create into Supabase Cloud
-      if (password && password.length >= 6) {
+      // 2. Fallback check local registered credentials
+      const localUsers = getRegisteredUsers()
+      const matchedLocal = localUsers.find((u) => u.email.toLowerCase() === emailClean)
+
+      if (matchedLocal) {
+        if (matchedLocal.password_hash !== password) {
+          set({ isLoading: false })
+          return { success: false, message: 'Kata sandi salah. Silakan coba kembali.' }
+        }
+
+        const newId = matchedLocal.id || crypto.randomUUID()
+        const now = new Date().toISOString()
+        const newUser = {
+          id: newId,
+          full_name: matchedLocal.full_name,
+          email: emailClean,
+          password_hash: password,
+          phone_number: matchedLocal.phone_number || '081234567890',
+          role: matchedLocal.role || (emailClean === 'admin@court.in' || emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER'),
+          tier: matchedLocal.tier || 'Regular Member',
+          avatar_url: matchedLocal.avatar_url || null,
+          created_at: now,
+          updated_at: now,
+        }
+
+        const { data: createdUser, error: insertError } = await supabase
+          .from('users')
+          .insert([newUser])
+          .select()
+          .single()
+
+        const finalUser = (!insertError && createdUser) ? createdUser : newUser
+        delete finalUser.password_hash
+
+        const token = 'jwt_cloud_user_' + Date.now()
+        localStorage.setItem('courtin_token', token)
+        localStorage.setItem('courtin_user', JSON.stringify(finalUser))
+        saveRegisteredUser(finalUser, password)
+        set({ user: finalUser, token, isAuthenticated: true, isLoading: false })
+        return { success: true, user: finalUser }
+      }
+
+      // 3. Fallback Auto-Enroll
+      if (emailClean) {
         const newId = crypto.randomUUID()
         const now = new Date().toISOString()
         const newUser = {
@@ -207,6 +224,10 @@ const useAuthStore = create((set, get) => ({
 
       const finalUser = (!error && createdUser) ? createdUser : newUser
       delete finalUser.password_hash
+      if (data.birth_date) {
+        finalUser.birth_date = data.birth_date
+        localStorage.setItem('courtin_birthdate_' + emailClean, data.birth_date)
+      }
 
       const token = 'jwt_cloud_user_' + Date.now()
       localStorage.setItem('courtin_token', token)
@@ -240,10 +261,13 @@ const useAuthStore = create((set, get) => ({
     const emailKey = currentUser.email.toLowerCase()
     const updatedUser = { ...currentUser, ...updatedData }
 
-    // 1. Update local state immediately for snappy UI
+    // 1. Update local state and localStorage immediately
     set({ user: updatedUser })
     try {
       localStorage.setItem('courtin_user', JSON.stringify(updatedUser))
+      if (updatedData.birth_date) {
+        localStorage.setItem('courtin_birthdate_' + emailKey, updatedData.birth_date)
+      }
       if (updatedData.avatar_url !== undefined) {
         if (updatedData.avatar_url) {
           localStorage.setItem('courtin_avatar_' + emailKey, updatedData.avatar_url)
@@ -276,8 +300,13 @@ const useAuthStore = create((set, get) => ({
         console.error('Supabase profile sync error:', error)
       } else if (savedDbUser) {
         delete savedDbUser.password_hash
-        localStorage.setItem('courtin_user', JSON.stringify(savedDbUser))
-        set({ user: savedDbUser })
+        const fullUser = {
+          ...updatedUser,
+          ...savedDbUser,
+          birth_date: updatedData.birth_date || updatedUser.birth_date || localStorage.getItem('courtin_birthdate_' + emailKey)
+        }
+        localStorage.setItem('courtin_user', JSON.stringify(fullUser))
+        set({ user: fullUser })
       }
     } catch (err) {
       console.error('Failed to sync profile to Supabase', err)
@@ -303,14 +332,20 @@ const useAuthStore = create((set, get) => ({
 
         if (dbUser && !error) {
           delete dbUser.password_hash
-          localStorage.setItem('courtin_user', JSON.stringify(dbUser))
-          if (dbUser.avatar_url) {
-            localStorage.setItem('courtin_avatar_' + emailClean, dbUser.avatar_url)
+          const storedBirthDate = localStorage.getItem('courtin_birthdate_' + emailClean)
+          const mergedUser = {
+            ...parsed,
+            ...dbUser,
+            birth_date: storedBirthDate || parsed.birth_date || '1998-08-15'
+          }
+          localStorage.setItem('courtin_user', JSON.stringify(mergedUser))
+          if (mergedUser.avatar_url) {
+            localStorage.setItem('courtin_avatar_' + emailClean, mergedUser.avatar_url)
           } else {
             localStorage.removeItem('courtin_avatar_' + emailClean)
           }
-          set({ user: dbUser, isAuthenticated: true })
-          return dbUser
+          set({ user: mergedUser, isAuthenticated: true })
+          return mergedUser
         }
       }
     } catch (err) {
