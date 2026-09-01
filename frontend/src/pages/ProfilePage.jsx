@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   User, Shield, Sliders, CheckCircle2, Phone,
@@ -10,8 +10,12 @@ import { compressAvatar } from '../utils/imageCompressor'
 import BirthDatePicker from '../components/BirthDatePicker'
 
 export default function ProfilePage() {
-  const { user, updateProfile, isAuthenticated } = useAuthStore()
+  const { user, updateProfile, fetchProfile, isAuthenticated } = useAuthStore()
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
 
   const [activeTab, setActiveTab] = useState('personal')
   const [fullName, setFullName] = useState(() => user?.full_name || '')

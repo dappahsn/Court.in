@@ -352,6 +352,60 @@ const useAuthStore = create((set, get) => ({
       console.error('Failed to fetch fresh profile', err)
     }
   },
+
+  /**
+   * Real-time WebSocket Subscription from Supabase
+   */
+  subscribeToUserRealtime: () => {
+    const localUser = localStorage.getItem('courtin_user')
+    if (!localUser) return () => {}
+
+    try {
+      const parsed = JSON.parse(localUser)
+      if (!parsed?.email) return () => {}
+
+      const emailClean = parsed.email.toLowerCase()
+      const channelName = `public:users:email=${emailClean}`
+
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `email=eq.${emailClean}`,
+          },
+          (payload) => {
+            if (payload?.new) {
+              const dbUser = { ...payload.new }
+              delete dbUser.password_hash
+              const storedBirthDate = localStorage.getItem('courtin_birthdate_' + emailClean)
+              const mergedUser = {
+                ...dbUser,
+                birth_date: storedBirthDate || dbUser.birth_date || '1998-08-15',
+              }
+              localStorage.setItem('courtin_user', JSON.stringify(mergedUser))
+              if (mergedUser.avatar_url) {
+                localStorage.setItem('courtin_avatar_' + emailClean, mergedUser.avatar_url)
+              } else {
+                localStorage.removeItem('courtin_avatar_' + emailClean)
+              }
+              set({ user: mergedUser })
+            }
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    } catch (e) {
+      console.error('Failed to subscribe to realtime updates', e)
+      return () => {}
+    }
+  },
 }))
 
 export default useAuthStore

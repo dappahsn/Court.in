@@ -32,13 +32,16 @@ import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminReviews from './pages/admin/AdminReviews'
 
 function App() {
-  const { fetchProfile } = useAuthStore()
+  const { fetchProfile, subscribeToUserRealtime } = useAuthStore()
 
   useEffect(() => {
     // 1. Initial fetch on startup/refresh
     fetchProfile()
 
-    // 2. Auto-fetch when user switches back to this browser tab on phone/laptop
+    // 2. Real-time WebSocket subscription from Supabase Cloud
+    const unsubscribe = subscribeToUserRealtime()
+
+    // 3. Auto-fetch when user switches back to this browser tab on phone/laptop
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         fetchProfile()
@@ -53,10 +56,11 @@ function App() {
     window.addEventListener('focus', handleFocus)
 
     return () => {
+      if (typeof unsubscribe === 'function') unsubscribe()
       window.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('focus', handleFocus)
     }
-  }, [fetchProfile])
+  }, [fetchProfile, subscribeToUserRealtime])
 
   return (
     <Routes>
