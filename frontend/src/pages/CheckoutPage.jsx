@@ -17,26 +17,35 @@ export default function CheckoutPage() {
   const { addNotification } = useNotificationStore()
   const { recordTransaction } = useCustomerStore()
 
-  // Default fallback if direct access without drafting
+  // Fallback defaults if direct access
   const serviceFee = settings?.service_fee ?? 2000
-  const courtFee = draftBooking?.court_fee || 150000
+  const courtFee = draftBooking?.court_fee || draftBooking?.court?.price_per_hour || 150000
 
-  const booking = draftBooking || {
-    court_id: 'c1a7d2b4-5f8e-4a11-9c32-1b8e9f2a0001',
-    court_name: 'Futsal Arena Banda Aceh - Lapangan A',
-    court_type: 'FUTSAL',
-    booking_date: new Date().toISOString().split('T')[0],
-    start_time: '19:00',
-    end_time: '20:00',
+  const booking = {
+    court_id: draftBooking?.court_id || draftBooking?.court?.id || 'c1a7d2b4-5f8e-4a11-9c32-1b8e9f2a0001',
+    court_name: draftBooking?.court_name || draftBooking?.court?.name || 'Futsal Arena Banda Aceh - Lapangan A',
+    court_type: draftBooking?.court_type || draftBooking?.court?.type || 'FUTSAL',
+    booking_date: draftBooking?.booking_date || new Date().toISOString().split('T')[0],
+    start_time: draftBooking?.start_time || '19:00',
+    end_time: draftBooking?.end_time || '20:00',
     court_fee: courtFee,
     service_fee: serviceFee,
     total_price: courtFee + serviceFee,
   }
 
   const [paymentMethod, setPaymentMethod] = useState('QRIS')
-  const [customerName, setCustomerName] = useState(user?.full_name || 'Muhammad Daffa Husen')
-  const [customerEmail, setCustomerEmail] = useState(user?.email || 'daffahusen@court.in')
-  const [customerPhone, setCustomerPhone] = useState(user?.phone_number || '081234567890')
+  const [customerName, setCustomerName] = useState(() => user?.full_name || 'Muhammad Daffa Husen')
+  const [customerEmail, setCustomerEmail] = useState(() => user?.email || 'daffahusen@court.in')
+  const [customerPhone, setCustomerPhone] = useState(() => user?.phone_number || '081234567890')
+
+  // Sync customer fields when logged in user loads
+  const [prevUserEmail, setPrevUserEmail] = useState(user?.email)
+  if (user?.email && user.email !== prevUserEmail) {
+    setPrevUserEmail(user.email)
+    setCustomerName(user.full_name || '')
+    setCustomerEmail(user.email || '')
+    setCustomerPhone(user.phone_number || '')
+  }
 
   // QRIS Countdown Timer based on admin settings (e.g. 15 minutes = 900s)
   const [timeLeft, setTimeLeft] = useState((settings?.qris_timeout_minutes || 15) * 60)
@@ -66,9 +75,10 @@ export default function CheckoutPage() {
   }
 
   const handleConfirmOrder = () => {
+    if (isProcessing) return
     setIsProcessing(true)
 
-    setTimeout(() => {
+    try {
       const totalPrice = booking.court_fee + serviceFee
       const isQris = paymentMethod === 'QRIS'
 
@@ -83,40 +93,58 @@ export default function CheckoutPage() {
         service_fee: serviceFee,
         total_price: totalPrice,
         payment_method: isQris ? 'QRIS' : 'CASH',
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone,
+        customer_name: customerName || user?.full_name || 'Pelanggan',
+        customer_email: customerEmail || user?.email || 'user@court.in',
+        customer_phone: customerPhone || user?.phone_number || '081234567890',
       })
 
-      // ── Two-Way Interconnection: Push Real-Time Notifications to Admin ──
-      addNotification({
-        category: 'BOOKING',
-        title: 'Booking Baru Masuk',
-        message: `${customerName} memesan ${booking.court_name} untuk ${booking.booking_date} (${booking.start_time} - ${booking.end_time} WIB)`,
-        action_url: '/admin/bookings',
-      })
+      // Push Real-Time Notifications to Admin
+      if (typeof addNotification === 'function') {
+        try {
+          addNotification({
+            category: 'BOOKING',
+            title: 'Booking Baru Masuk',
+            message: `${customerName} memesan ${booking.court_name} untuk ${booking.booking_date} (${booking.start_time} - ${booking.end_time} WIB)`,
+            action_url: '/admin/bookings',
+          })
 
-      if (isQris) {
-        addNotification({
-          category: 'PAYMENT',
-          title: 'Pembayaran QRIS Lunas',
-          message: `Pelunasan Rp${totalPrice.toLocaleString('id-ID')} dari ${customerName} (${order.id}) berhasil diverifikasi otomatis.`,
-          action_url: '/admin/bookings',
-        })
+          if (isQris) {
+            addNotification({
+              category: 'PAYMENT',
+              title: 'Pembayaran QRIS Lunas',
+              message: `Pelunasan Rp${totalPrice.toLocaleString('id-ID')} dari ${customerName} (${order.id}) berhasil diverifikasi otomatis.`,
+              action_url: '/admin/bookings',
+            })
+          }
+        } catch (notifErr) {
+          console.warn('Failed to send admin notification:', notifErr)
+        }
       }
 
-      // ── Two-Way Interconnection: Update Admin Customer Directory ──
-      recordTransaction({
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        sport: booking.court_type,
-        amount: totalPrice,
-      })
+      // Update Admin Customer Directory
+      if (typeof recordTransaction === 'function') {
+        try {
+          recordTransaction({
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            sport: booking.court_type,
+            amount: totalPrice,
+          })
+        } catch (custErr) {
+          console.warn('Failed to record customer stats:', custErr)
+        }
+      }
 
-      setCompletedOrder(order)
+      // Transition to success screen
+      setTimeout(() => {
+        setCompletedOrder(order)
+        setIsProcessing(false)
+      }, 500)
+    } catch (err) {
+      console.error('Checkout error:', err)
       setIsProcessing(false)
-    }, 1000)
+    }
   }
 
   const copyBookingId = (id) => {
@@ -131,7 +159,7 @@ export default function CheckoutPage() {
 
     return (
       <div className="max-w-[650px] mx-auto px-4 py-12 sm:py-16">
-        <div className="bg-surface rounded-2xl p-6 sm:p-10 border border-border shadow-xl text-center space-y-6">
+        <div className="bg-surface rounded-2xl p-6 sm:p-10 border border-border shadow-xl text-center space-y-6 animate-slide-in">
           <div className="w-12 h-12 rounded-full bg-primary-light text-primary flex items-center justify-center mx-auto">
             <CheckCircle2 size={28} />
           </div>
@@ -160,39 +188,35 @@ export default function CheckoutPage() {
                   Nomor Tiket
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-base text-text-primary">
+                  <span className="font-mono font-bold text-lg sm:text-xl text-text-primary">
                     {completedOrder.id}
                   </span>
                   <button
                     type="button"
                     onClick={() => copyBookingId(completedOrder.id)}
-                    className="text-text-muted hover:text-primary transition-colors"
-                    title="Salin ID"
+                    className="p-1.5 rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                    title="Salin Nomor Tiket"
                   >
                     <Copy size={14} />
                   </button>
-                  {copiedId && <span className="text-xs text-primary font-medium">Disalin!</span>}
+                  {copiedId && (
+                    <span className="text-[10px] text-primary font-semibold">Tersalin!</span>
+                  )}
                 </div>
               </div>
 
-              {/* QR Code Graphic */}
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 bg-white p-1 rounded-xl border border-border flex items-center justify-center">
-                  <QrCode size={64} className="text-text-primary" />
-                </div>
-                <span className="text-[10px] text-text-muted mt-1">Scan di Lokasi</span>
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-border/50">
+                <span className="text-xs text-text-muted">Metode Pembayaran</span>
+                <span className="font-bold text-sm text-text-primary">
+                  {isPaid ? 'QRIS (LUNAS)' : 'Tunai di Venue'}
+                </span>
               </div>
             </div>
 
-            {/* Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm pt-2">
               <div>
                 <span className="text-xs text-text-muted block">Lapangan</span>
-                <span className="font-semibold text-text-primary">{completedOrder.court_name}</span>
-              </div>
-              <div>
-                <span className="text-xs text-text-muted block">Cabang</span>
-                <span className="font-semibold text-text-primary">{completedOrder.court_type}</span>
+                <span className="font-bold text-text-primary">{completedOrder.court_name}</span>
               </div>
               <div>
                 <span className="text-xs text-text-muted block">Tanggal Main</span>
@@ -206,9 +230,9 @@ export default function CheckoutPage() {
                 <span className="text-xs text-text-muted block">Pemesan</span>
                 <span className="font-semibold text-text-primary">{completedOrder.customer_name}</span>
               </div>
-              <div>
-                <span className="text-xs text-text-muted block">Total Pembayaran</span>
-                <span className="font-extrabold text-primary">Rp{completedOrder.total_price.toLocaleString('id-ID')}</span>
+              <div className="col-span-2 pt-2 border-t border-border/60 flex items-center justify-between">
+                <span className="text-xs text-text-muted">Total Pembayaran</span>
+                <span className="font-extrabold text-primary text-base">Rp{completedOrder.total_price.toLocaleString('id-ID')}</span>
               </div>
             </div>
           </div>

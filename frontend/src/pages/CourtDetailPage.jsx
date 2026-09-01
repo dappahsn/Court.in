@@ -68,10 +68,17 @@ export default function CourtDetailPage() {
   const handleProceedToBooking = () => {
     if (!selectedSlot) return
 
+    const [start_time, end_time] = selectedSlot.split(' - ')
+
     setDraftBooking({
       court,
+      court_id: court.id,
+      court_name: court.name,
+      court_type: court.type,
       booking_date: selectedDate,
       time_slot: selectedSlot,
+      start_time: start_time || '19:00',
+      end_time: end_time || '20:00',
       total_price: totalPrice,
       court_fee: courtFee,
       service_fee: serviceFee,
