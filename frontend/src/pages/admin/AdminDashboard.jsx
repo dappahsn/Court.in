@@ -28,6 +28,17 @@ export default function AdminDashboard() {
       return pm === 'CASH' || pm === 'PAY_AT_VENUE' || pm === 'TUNAI' || pm.includes('TEMPAT') || !pm
     }).length
 
+    const cashBookings = bookings.filter((b) => {
+      const pm = (b.payment_method || '').toUpperCase()
+      return pm === 'CASH' || pm === 'PAY_AT_VENUE' || pm === 'TUNAI' || pm.includes('TEMPAT') || !pm
+    })
+
+    const totalCashRevenue = cashBookings
+      .filter((b) => b.status === 'PAID' || b.status === 'COMPLETED')
+      .reduce((sum, b) => sum + (b.total_price || 0), 0)
+
+    const pendingCashCount = bookings.filter((b) => b.status === 'PAY_AT_VENUE').length
+
     const futsalRevenue = bookings.filter((b) => b.court_type === 'FUTSAL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
     const badmintonRevenue = bookings.filter((b) => b.court_type === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
     const padelRevenue = bookings.filter((b) => b.court_type === 'PADEL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
@@ -35,7 +46,9 @@ export default function AdminDashboard() {
     return {
       totalBookings,
       totalRevenue,
+      totalCashRevenue,
       pendingCash,
+      pendingCashCount,
       qrisCount,
       cashCount,
       futsalRevenue,
@@ -123,16 +136,18 @@ export default function AdminDashboard() {
 
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Kasir / Di Tempat</span>
+            <span>Total Kasir (Tunai)</span>
             <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
               <Clock size={16} />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-text-primary">
-            Rp{metrics.pendingCash.toLocaleString('id-ID')}
+            Rp{metrics.totalCashRevenue.toLocaleString('id-ID')}
           </p>
-          <p className="text-xs text-amber-600 font-medium">
-            Menunggu pembayaran kasir
+          <p className={`text-xs font-medium ${metrics.pendingCashCount > 0 ? 'text-amber-600 font-semibold' : 'text-emerald-600'}`}>
+            {metrics.pendingCashCount > 0
+              ? `Rp${metrics.pendingCash.toLocaleString('id-ID')} (${metrics.pendingCashCount} belum lunas)`
+              : 'Semua transaksi tunai lunas'}
           </p>
         </div>
 
