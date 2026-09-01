@@ -22,6 +22,12 @@ export default function AdminDashboard() {
     const totalRevenue = paidBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
     const pendingCash = bookings.filter((b) => b.status === 'PAY_AT_VENUE').reduce((sum, b) => sum + (b.total_price || 0), 0)
 
+    const qrisCount = bookings.filter((b) => (b.payment_method || '').toUpperCase() === 'QRIS').length
+    const cashCount = bookings.filter((b) => {
+      const pm = (b.payment_method || '').toUpperCase()
+      return pm === 'CASH' || pm === 'PAY_AT_VENUE' || pm === 'TUNAI' || pm.includes('TEMPAT') || !pm
+    }).length
+
     const futsalRevenue = bookings.filter((b) => b.court_type === 'FUTSAL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
     const badmintonRevenue = bookings.filter((b) => b.court_type === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
     const padelRevenue = bookings.filter((b) => b.court_type === 'PADEL' && b.status !== 'CANCELLED').reduce((s, b) => s + b.total_price, 0)
@@ -30,6 +36,8 @@ export default function AdminDashboard() {
       totalBookings,
       totalRevenue,
       pendingCash,
+      qrisCount,
+      cashCount,
       futsalRevenue,
       badmintonRevenue,
       padelRevenue,
@@ -109,7 +117,7 @@ export default function AdminDashboard() {
             {metrics.totalBookings} Reservasi
           </p>
           <p className="text-xs text-text-muted">
-            {bookings.filter((b) => b.status === 'PAID').length} QRIS • {bookings.filter((b) => b.status === 'PAY_AT_VENUE').length} Tunai
+            {metrics.qrisCount} QRIS • {metrics.cashCount} Tunai
           </p>
         </div>
 
