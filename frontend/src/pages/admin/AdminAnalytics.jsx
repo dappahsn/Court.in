@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   DollarSign, Download, Clock,
   Users, CheckCircle2,
-  TrendingUp, PieChart
+  Calendar, PieChart, Activity
 } from 'lucide-react'
 import useBookingStore from '../../stores/bookingStore'
 import useStaffStore from '../../stores/staffStore'
@@ -26,11 +26,8 @@ export default function AdminAnalytics() {
   // ── Pure 100% Real Analytics Calculations ──
   const analytics = useMemo(() => {
     const paidBookings = bookings.filter((b) => b.status === 'PAID' || b.status === 'COMPLETED')
-    const grossSalesRevenue = paidBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
-    const netSales = grossSalesRevenue // Diskon 0
-    const grossProfitMargin = 0.8 // 80% operational margin
-    const grossProfit = Math.round(grossSalesRevenue * grossProfitMargin)
-    const avgOrderValue = paidBookings.length > 0 ? Math.round(grossSalesRevenue / paidBookings.length) : 0
+    const totalRevenue = paidBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
+    const avgOrderValue = paidBookings.length > 0 ? Math.round(totalRevenue / paidBookings.length) : 0
 
     // Payment Method Breakdown
     const qrisBookings = bookings.filter((b) => (b.payment_method || '').toUpperCase() === 'QRIS')
@@ -38,6 +35,10 @@ export default function AdminAnalytics() {
       const pm = (b.payment_method || '').toUpperCase()
       return pm === 'CASH' || pm === 'PAY_AT_VENUE' || pm === 'TUNAI' || pm.includes('TEMPAT') || !pm
     })
+
+    const totalCashRevenue = cashBookings
+      .filter((b) => b.status === 'PAID' || b.status === 'COMPLETED')
+      .reduce((sum, b) => sum + (b.total_price || 0), 0)
 
     const qrisCount = qrisBookings.length
     const cashCount = cashBookings.length
@@ -52,14 +53,13 @@ export default function AdminAnalytics() {
     const badmintonRevenue = bookings.filter((b) => (b.court_type || '').toUpperCase() === 'BADMINTON' && b.status !== 'CANCELLED').reduce((s, b) => s + (b.total_price || 0), 0)
 
     // Staff Performance Calculation
-    // Total real revenue generated is mapped to active cashiers / admin
     const staffStats = staffList.map((staff) => {
       let revenue = 0
       let ordersServed = 0
 
-      // Map real completed bookings to the main active super admin / cashier
+      // Map real completed bookings to the active super admin / cashier
       if (staff.role === 'SUPER_ADMIN' || staff.name.includes('Daffa')) {
-        revenue = grossSalesRevenue
+        revenue = totalRevenue
         ordersServed = paidBookings.length
       }
 
@@ -73,9 +73,8 @@ export default function AdminAnalytics() {
     })
 
     return {
-      grossSalesRevenue,
-      netSales,
-      grossProfit,
+      totalRevenue,
+      totalCashRevenue,
       avgOrderValue,
       totalOrders: bookings.length,
       paidOrdersCount: paidBookings.length,
@@ -168,17 +167,17 @@ export default function AdminAnalytics() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-widest text-primary bg-primary-light px-2.5 py-0.5 rounded-md">
-              Executive Analytics
+              Laporan Operasional
             </span>
             <span className="text-xs text-text-muted">•</span>
             <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              100% Data Real Time
+              Real-Time Database
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">Reports & Analytics</h1>
           <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-            Laporan omset reservasi sewa, gross profit, proporsi pembayaran, dan performa kasir.
+            Pantau arus omset sewa lapangan, proporsi metode pembayaran, dan performa petugas kasir.
           </p>
         </div>
 
@@ -192,69 +191,69 @@ export default function AdminAnalytics() {
         </button>
       </div>
 
-      {/* ── 4 Top KPI Metric Cards (Matching Reference Layout) ── */}
+      {/* ── 4 KPI Metric Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Gross Sales Revenue */}
+        {/* Card 1: Total Omset Lunas */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Gross Sales Revenue</span>
+            <span>Total Pendapatan Lunas</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <DollarSign size={16} />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-text-primary">
-            Rp{analytics.grossSalesRevenue.toLocaleString('id-ID')}
+            Rp{analytics.totalRevenue.toLocaleString('id-ID')}
           </p>
-          <p className="text-xs text-text-muted">
-            {analytics.paidOrdersCount} completed orders
+          <p className="text-xs text-emerald-600 font-medium">
+            {analytics.paidOrdersCount} reservasi selesai
           </p>
         </div>
 
-        {/* Card 2: Net Sales */}
+        {/* Card 2: Total Booking */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Net Sales</span>
+            <span>Total Booking</span>
             <div className="w-8 h-8 rounded-lg bg-primary-light text-primary flex items-center justify-center">
-              <TrendingUp size={16} />
-            </div>
-          </div>
-          <p className="text-2xl font-extrabold text-primary">
-            Rp{analytics.netSales.toLocaleString('id-ID')}
-          </p>
-          <p className="text-xs text-text-muted">
-            Discounts: -Rp 0
-          </p>
-        </div>
-
-        {/* Card 3: Gross Profit */}
-        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Gross Profit</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <span className="font-extrabold text-xs">%</span>
+              <Calendar size={16} />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-text-primary">
-            Rp{analytics.grossProfit.toLocaleString('id-ID')}
+            {analytics.totalOrders} Reservasi
           </p>
-          <p className="text-xs text-emerald-600 font-semibold">
-            Margin: 80.0%
+          <p className="text-xs text-text-muted font-medium">
+            {analytics.qrisCount} QRIS • {analytics.cashCount} Tunai
+          </p>
+        </div>
+
+        {/* Card 3: Total Kasir Tunai */}
+        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
+            <span>Total Kasir (Tunai)</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Clock size={16} />
+            </div>
+          </div>
+          <p className="text-2xl font-extrabold text-text-primary">
+            Rp{analytics.totalCashRevenue.toLocaleString('id-ID')}
+          </p>
+          <p className="text-xs text-emerald-600 font-medium">
+            Semua transaksi tunai lunas
           </p>
         </div>
 
         {/* Card 4: Avg Order Value (AOV) */}
         <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-xs text-text-muted font-bold uppercase tracking-wider">
-            <span>Avg Order Value (AOV)</span>
+            <span>Rata-Rata Sewa (AOV)</span>
             <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <TrendingUp size={16} />
+              <Activity size={16} />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-text-primary">
             Rp{analytics.avgOrderValue.toLocaleString('id-ID')}
           </p>
           <p className="text-xs text-text-muted">
-            Average per booking
+            Rata-rata omset per sesi sewa
           </p>
         </div>
       </div>
@@ -266,8 +265,8 @@ export default function AdminAnalytics() {
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-extrabold text-base text-text-primary">Payment Method Proportions</h3>
-                <p className="text-xs text-text-muted mt-0.5">Sales volume by payment method</p>
+                <h3 className="font-extrabold text-base text-text-primary">Proporsi Metode Pembayaran</h3>
+                <p className="text-xs text-text-muted mt-0.5">Distribusi volume transaksi sewa berdasarkan cara bayar</p>
               </div>
               <div className="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center">
                 <PieChart size={16} />
@@ -370,8 +369,8 @@ export default function AdminAnalytics() {
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-extrabold text-base text-text-primary">Cashier & Staff Performance</h3>
-                <p className="text-xs text-text-muted mt-0.5">Total sales revenue served per staff</p>
+                <h3 className="font-extrabold text-base text-text-primary">Performa Kasir & Petugas</h3>
+                <p className="text-xs text-text-muted mt-0.5">Total omset sewa yang dilayani per anggota staf</p>
               </div>
               <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                 <Users size={16} />
@@ -503,7 +502,7 @@ export default function AdminAnalytics() {
                 <SportIcon type="FUTSAL" className="w-4 h-4 text-primary" /> Futsal
               </span>
               <span className="text-xs font-extrabold text-primary">
-                {analytics.grossSalesRevenue > 0 ? Math.round((analytics.futsalRevenue / analytics.grossSalesRevenue) * 100) : 0}%
+                {analytics.totalRevenue > 0 ? Math.round((analytics.futsalRevenue / analytics.totalRevenue) * 100) : 0}%
               </span>
             </div>
             <p className="text-xl font-black text-text-primary">
@@ -513,7 +512,7 @@ export default function AdminAnalytics() {
               <div
                 className="h-full bg-primary rounded-full"
                 style={{
-                  width: `${analytics.grossSalesRevenue > 0 ? (analytics.futsalRevenue / analytics.grossSalesRevenue) * 100 : 0}%`
+                  width: `${analytics.totalRevenue > 0 ? (analytics.futsalRevenue / analytics.totalRevenue) * 100 : 0}%`
                 }}
               />
             </div>
@@ -525,7 +524,7 @@ export default function AdminAnalytics() {
                 <SportIcon type="PADEL" className="w-4 h-4 text-primary" /> Padel Tennis
               </span>
               <span className="text-xs font-extrabold text-indigo-600">
-                {analytics.grossSalesRevenue > 0 ? Math.round((analytics.padelRevenue / analytics.grossSalesRevenue) * 100) : 0}%
+                {analytics.totalRevenue > 0 ? Math.round((analytics.padelRevenue / analytics.totalRevenue) * 100) : 0}%
               </span>
             </div>
             <p className="text-xl font-black text-text-primary">
@@ -535,7 +534,7 @@ export default function AdminAnalytics() {
               <div
                 className="h-full bg-indigo-500 rounded-full"
                 style={{
-                  width: `${analytics.grossSalesRevenue > 0 ? (analytics.padelRevenue / analytics.grossSalesRevenue) * 100 : 0}%`
+                  width: `${analytics.totalRevenue > 0 ? (analytics.padelRevenue / analytics.totalRevenue) * 100 : 0}%`
                 }}
               />
             </div>
@@ -547,7 +546,7 @@ export default function AdminAnalytics() {
                 <SportIcon type="BADMINTON" className="w-4 h-4 text-primary" /> Badminton
               </span>
               <span className="text-xs font-extrabold text-emerald-600">
-                {analytics.grossSalesRevenue > 0 ? Math.round((analytics.badmintonRevenue / analytics.grossSalesRevenue) * 100) : 0}%
+                {analytics.totalRevenue > 0 ? Math.round((analytics.badmintonRevenue / analytics.totalRevenue) * 100) : 0}%
               </span>
             </div>
             <p className="text-xl font-black text-text-primary">
@@ -557,7 +556,7 @@ export default function AdminAnalytics() {
               <div
                 className="h-full bg-emerald-500 rounded-full"
                 style={{
-                  width: `${analytics.grossSalesRevenue > 0 ? (analytics.badmintonRevenue / analytics.grossSalesRevenue) * 100 : 0}%`
+                  width: `${analytics.totalRevenue > 0 ? (analytics.badmintonRevenue / analytics.totalRevenue) * 100 : 0}%`
                 }}
               />
             </div>
