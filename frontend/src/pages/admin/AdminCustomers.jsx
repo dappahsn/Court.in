@@ -1,18 +1,24 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Search, Plus, Phone, Mail,
   CheckCircle2, X, MessageSquare,
-  Trash2
+  Trash2, AlertTriangle
 } from 'lucide-react'
 import useCustomerStore from '../../stores/customerStore'
 import SportIcon from '../../components/SportIcon'
 import CustomSelect from '../../components/CustomSelect'
 
 export default function AdminCustomers() {
-  const { customers, addCustomer, deleteCustomer } = useCustomerStore()
+  const { customers, addCustomer, deleteCustomer, fetchCustomers } = useCustomerStore()
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [fetchCustomers])
 
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [toastMsg, setToastMsg] = useState(null)
 
   const [formData, setFormData] = useState({
@@ -43,10 +49,10 @@ export default function AdminCustomers() {
     return customers.filter((c) => {
       const q = search.toLowerCase()
       return (
-        c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        c.preferred_sport.toLowerCase().includes(q)
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.phone || '').includes(q) ||
+        (c.email || '').toLowerCase().includes(q) ||
+        (c.preferred_sport || '').toLowerCase().includes(q)
       )
     })
   }, [customers, search])
@@ -63,6 +69,21 @@ export default function AdminCustomers() {
       tier: 'Regular',
     })
     setModalOpen(false)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    try {
+      await deleteCustomer(deleteTarget.id)
+      showToast(`Data pelanggan "${deleteTarget.name}" berhasil dihapus.`)
+      setDeleteTarget(null)
+    } catch (err) {
+      console.error('Delete error', err)
+      showToast('Gagal menghapus data pelanggan.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -129,7 +150,7 @@ export default function AdminCustomers() {
                     <td className="py-3.5 px-4 sm:px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0">
-                          {c.name.charAt(0)}
+                          {(c.name || 'P').charAt(0)}
                         </div>
                         <div>
                           <p className="font-bold text-text-primary text-sm">{c.name}</p>
@@ -149,7 +170,7 @@ export default function AdminCustomers() {
                       <span
                         className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
                           c.tier === 'VIP Member'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40'
                             : 'bg-surface-container text-text-secondary'
                         }`}
                       >
@@ -159,26 +180,26 @@ export default function AdminCustomers() {
 
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <span className="flex items-center gap-1.5 font-semibold text-text-primary">
-                        <SportIcon type={c.preferred_sport} className="w-3.5 h-3.5 text-primary" />
-                        <span>{c.preferred_sport}</span>
+                        <SportIcon type={c.preferred_sport || 'FUTSAL'} className="w-3.5 h-3.5 text-primary" />
+                        <span>{c.preferred_sport || 'FUTSAL'}</span>
                       </span>
                     </td>
 
                     <td className="py-3.5 px-4 whitespace-nowrap font-bold text-text-primary">
-                      {c.total_bookings} Kali
+                      {c.total_bookings || 0} Kali
                     </td>
 
                     <td className="py-3.5 px-4 whitespace-nowrap font-extrabold text-primary">
-                      Rp{c.total_spend.toLocaleString('id-ID')}
+                      Rp{(c.total_spend || 0).toLocaleString('id-ID')}
                     </td>
 
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         <a
-                          href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`}
+                          href={`https://wa.me/${(c.phone || '').replace(/[^0-9]/g, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1 transition-colors cursor-pointer"
                           title="Chat WhatsApp"
                         >
                           <MessageSquare size={12} />
@@ -187,16 +208,11 @@ export default function AdminCustomers() {
 
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm(`Hapus pelanggan ${c.name}?`)) {
-                              deleteCustomer(c.id)
-                              showToast(`Pelanggan ${c.name} dihapus.`)
-                            }
-                          }}
-                          className="p-1.5 rounded-lg border border-border text-danger hover:bg-danger/10 transition-colors"
+                          onClick={() => setDeleteTarget(c)}
+                          className="p-1.5 rounded-lg border border-border text-danger hover:bg-danger/10 hover:border-danger/30 transition-colors cursor-pointer"
                           title="Hapus Data"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -214,6 +230,56 @@ export default function AdminCustomers() {
         </div>
       </div>
 
+      {/* Modal Konfirmasi Hapus Pelanggan */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-border space-y-5 animate-slide-in text-center relative">
+            <div className="w-14 h-14 rounded-2xl bg-danger/10 text-danger flex items-center justify-center mx-auto ring-8 ring-danger/5">
+              <AlertTriangle size={28} />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-extrabold text-text-primary">
+                Hapus Pelanggan?
+              </h3>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Apakah Anda yakin ingin menghapus data pemain <strong className="text-text-primary font-bold">{deleteTarget.name}</strong> ({deleteTarget.email})? Tindakan ini tidak dapat dibatalkan.
+              </p>
+            </div>
+
+            <div className="p-3 bg-surface-container-low rounded-2xl border border-border text-left flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center font-extrabold text-xs shrink-0">
+                {(deleteTarget.name || 'P').charAt(0)}
+              </div>
+              <div className="truncate text-xs">
+                <p className="font-bold text-text-primary truncate">{deleteTarget.name}</p>
+                <p className="text-[11px] text-text-muted truncate">{deleteTarget.phone} • {deleteTarget.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+                className="w-full py-2.5 rounded-xl border border-border text-text-secondary font-bold text-xs hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="w-full py-2.5 rounded-xl bg-danger hover:bg-danger/90 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Trash2 size={13} />
+                <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Tambah Pelanggan */}
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -227,7 +293,7 @@ export default function AdminCustomers() {
             </button>
 
             <div>
-              <span className="text-xs font-bold text-primary uppercase">Registrasi Member</span>
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">Registrasi Member</span>
               <h2 className="text-xl font-bold text-text-primary mt-0.5">
                 Tambah Pelanggan Baru
               </h2>
@@ -290,13 +356,13 @@ export default function AdminCustomers() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-border text-text-secondary font-semibold hover:bg-surface-container-low"
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-secondary font-semibold hover:bg-surface-container-low cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-white font-bold shadow-xs"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-white font-bold shadow-xs cursor-pointer"
                 >
                   Simpan Pelanggan
                 </button>

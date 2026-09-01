@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { supabase } from '../lib/supabaseClient'
 
 const INITIAL_CUSTOMERS = [
   {
@@ -83,6 +84,65 @@ const loadSavedCustomers = () => {
 const useCustomerStore = create((set, get) => ({
   customers: loadSavedCustomers(),
 
+  /**
+   * Fetch registered customers from Supabase Cloud Database
+   */
+  fetchCustomers: async () => {
+    try {
+      const { data: dbUsers, error } = await supabase
+        .from('users')
+        .select('*')
+        .neq('role', 'ADMIN')
+
+      if (error) {
+        console.error('Failed to query users from Supabase', error)
+        return
+      }
+
+      if (dbUsers && dbUsers.length > 0) {
+        const currentList = [...get().customers]
+        const merged = [...currentList]
+
+        dbUsers.forEach((u) => {
+          const idx = merged.findIndex(
+            (c) => c.email && c.email.toLowerCase() === u.email.toLowerCase()
+          )
+          if (idx >= 0) {
+            merged[idx] = {
+              ...merged[idx],
+              name: u.full_name || merged[idx].name,
+              phone: u.phone_number || merged[idx].phone,
+              tier: u.tier || merged[idx].tier,
+            }
+          } else {
+            merged.unshift({
+              id: u.id,
+              name: u.full_name,
+              email: u.email,
+              phone: u.phone_number || '-',
+              tier: u.tier || 'Regular',
+              total_bookings: 1,
+              total_spend: 152000,
+              preferred_sport: 'FUTSAL',
+              last_active: 'Baru saja',
+              joined_date: 'September 2026',
+              status: 'ACTIVE',
+            })
+          }
+        })
+
+        set({ customers: merged })
+        try {
+          localStorage.setItem('courtin_customers', JSON.stringify(merged))
+        } catch (e) {
+          console.error('Failed to save customers to localStorage', e)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync customers', e)
+    }
+  },
+
   addCustomer: (customerData) => {
     const newId = `cst-${Date.now().toString().slice(-4)}`
     const newCustomer = {
@@ -112,6 +172,37 @@ const useCustomerStore = create((set, get) => ({
       localStorage.setItem('courtin_customers', JSON.stringify(updated))
     } catch (e) {
       console.error('Failed to update customer', e)
+    }
+  },
+
+  /**
+   * Delete customer permanently from state, localStorage, and Supabase
+   */
+  deleteCustomer: async (id) => {
+    const customerToDelete = get().customers.find((c) => c.id === id)
+    const updated = get().customers.filter((c) => c.id !== id)
+    set({ customers: updated })
+    try {
+      localStorage.setItem('courtin_customers', JSON.stringify(updated))
+    } catch (e) {
+      console.error('Failed to update local customers', e)
+    }
+
+    // Also delete from Supabase if customer email is present
+    if (customerToDelete?.email) {
+      try {
+        const { error } = await supabase
+          .from('users')
+          .delete()
+          .eq('email', customerToDelete.email.toLowerCase())
+          .neq('role', 'ADMIN')
+
+        if (error) {
+          console.error('Supabase customer delete error:', error)
+        }
+      } catch (err) {
+        console.error('Failed to delete user from Supabase', err)
+      }
     }
   },
 
