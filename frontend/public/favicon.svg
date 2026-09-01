@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
+  <!-- Dynamic 'C' Curve with Speed Motion -->
+  <path
+    d="M24 11.2C22.4 9.2 19.8 8 17 8C12 8 8 12 8 17C8 22 12 26 17 26C19.8 26 22.4 24.8 24 22.8"
+    stroke="#0058FF"
+    stroke-width="4.2"
+    stroke-linecap="round"
+  />
+  <!-- Central Ball -->
+  <circle cx="17" cy="17" r="3.2" fill="#0058FF" />
+  <!-- Speed Lines -->
+  <rect x="21" y="14.8" width="5.5" height="1.8" rx="0.9" fill="#0058FF" />
+  <rect x="22.5" y="17.8" width="6.5" height="1.8" rx="0.9" fill="#0058FF" />
+</svg>

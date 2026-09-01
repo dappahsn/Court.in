@@ -1,0 +1,110 @@
+# ==============================================================================
+#  court.in — Root .gitignore Configuration
+#  Memastikan file sensitif (API Keys, Database Password, Token) tidak bocor ke GitHub
+# ==============================================================================
+
+# ── 1. Secrets & Environment Files (SANGAT PENTING) ──
+.env
+.env.*
+!.env.example
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.env.production
+*.env.development
+backend/.env
+frontend/.env
+
+# Kunci Sertifikat & Private Keys
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+service-account*.json
+id_rsa
+id_dsa
+
+# ── 2. Dependencies & Package Managers ──
+node_modules/
+*/node_modules/
+jspm_packages/
+.pnp/
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ── 3. Build Outputs & Compilations ──
+dist/
+*/dist/
+build/
+*/build/
+out/
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+*.tsbuildinfo
+
+# ── 4. Cache, Logs & Runtime Data ──
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.vite/
+temp/
+tmp/
+
+# ── 5. Database & Local Storage Files ──
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sql.gz
+*.sql.dump
+
+# ── 6. Operating System Files ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── 7. IDE & Code Editor Configurations ──
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ── 8. Testing & Coverage ──
+coverage/
+.nyc_output/
+.vitest/
