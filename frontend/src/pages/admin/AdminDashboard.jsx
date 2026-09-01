@@ -343,56 +343,146 @@ export default function AdminDashboard() {
       {/* ── Sport Distribution & Quick Shortcuts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-2xs space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-base text-text-primary">Distribusi Omset per Cabang Olahraga</h3>
-              <p className="text-xs text-text-muted mt-0.5">Kontribusi pendapatan dari sewa lapangan Futsal, Badminton, & Padel</p>
-            </div>
-            <span className="text-xs font-semibold text-text-muted">
-              Real-Time
-            </span>
+          <div>
+            <h3 className="font-extrabold text-base sm:text-lg text-text-primary">Distribusi Omset per Cabang Olahraga</h3>
+            <p className="text-xs text-text-muted mt-0.5">Kontribusi pendapatan dari sewa lapangan Futsal, Badminton, & Padel</p>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1.5">
-                <span className="flex items-center gap-1.5 text-text-primary">
-                  <SportIcon type="FUTSAL" className="w-4 h-4 text-primary" /> Futsal
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+            {/* SVG Donut Ring Chart */}
+            <div className="sm:col-span-5 flex flex-col items-center justify-center relative py-2">
+              <svg width="200" height="200" viewBox="0 0 160 160" className="transform -rotate-90 overflow-visible">
+                {/* Background Ring */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="56"
+                  fill="transparent"
+                  stroke="currentColor"
+                  className="text-surface-container"
+                  strokeWidth="18"
+                />
+
+                {/* Futsal Segment */}
+                {metrics.futsalPct > 0 && (
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="56"
+                    fill="transparent"
+                    stroke="#2563eb"
+                    strokeWidth="18"
+                    strokeDasharray={`${(metrics.futsalPct / 100) * 351.86} 351.86`}
+                    strokeDashoffset="0"
+                    className="transition-all duration-500 cursor-pointer"
+                  />
+                )}
+
+                {/* Padel Segment */}
+                {metrics.padelPct > 0 && (
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="56"
+                    fill="transparent"
+                    stroke="#6366f1"
+                    strokeWidth="18"
+                    strokeDasharray={`${(metrics.padelPct / 100) * 351.86} 351.86`}
+                    strokeDashoffset={-((metrics.futsalPct / 100) * 351.86)}
+                    className="transition-all duration-500 cursor-pointer"
+                  />
+                )}
+
+                {/* Badminton Segment */}
+                {metrics.badmintonPct > 0 && (
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="56"
+                    fill="transparent"
+                    stroke="#10b981"
+                    strokeWidth="18"
+                    strokeDasharray={`${(metrics.badmintonPct / 100) * 351.86} 351.86`}
+                    strokeDashoffset={-(((metrics.futsalPct + metrics.padelPct) / 100) * 351.86)}
+                    className="transition-all duration-500 cursor-pointer"
+                  />
+                )}
+              </svg>
+
+              {/* Center Info in Donut Ring */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                <span className="text-xl font-black text-text-primary">
+                  Rp{(metrics.totalRevenue / 1000).toLocaleString('id-ID')}k
                 </span>
-                <span className="font-bold text-text-primary">
-                  Rp{metrics.futsalRevenue.toLocaleString('id-ID')} ({metrics.futsalPct}%)
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
+                  Total Omset
                 </span>
-              </div>
-              <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${metrics.futsalPct}%` }} />
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1.5">
-                <span className="flex items-center gap-1.5 text-text-primary">
-                  <SportIcon type="PADEL" className="w-4 h-4 text-primary" /> Padel Tennis
-                </span>
-                <span className="font-bold text-text-primary">
-                  Rp{metrics.padelRevenue.toLocaleString('id-ID')} ({metrics.padelPct}%)
-                </span>
+            {/* Sport Legend & Metric Cards */}
+            <div className="sm:col-span-7 space-y-3">
+              {/* Futsal */}
+              <div className="p-3.5 bg-surface-container-low rounded-2xl border border-border/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200">
+                    <SportIcon type="FUTSAL" className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-text-primary">Futsal Arena</h4>
+                    <p className="text-[11px] text-text-muted">Lapangan Futsal</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-black text-text-primary">
+                    Rp{metrics.futsalRevenue.toLocaleString('id-ID')}
+                  </p>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 inline-block mt-0.5">
+                    {metrics.futsalPct}%
+                  </span>
+                </div>
               </div>
-              <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${metrics.padelPct}%` }} />
-              </div>
-            </div>
 
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1.5">
-                <span className="flex items-center gap-1.5 text-text-primary">
-                  <SportIcon type="BADMINTON" className="w-4 h-4 text-primary" /> Badminton
-                </span>
-                <span className="font-bold text-text-primary">
-                  Rp{metrics.badmintonRevenue.toLocaleString('id-ID')} ({metrics.badmintonPct}%)
-                </span>
+              {/* Padel */}
+              <div className="p-3.5 bg-surface-container-low rounded-2xl border border-border/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-200">
+                    <SportIcon type="PADEL" className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-text-primary">Padel Tennis</h4>
+                    <p className="text-[11px] text-text-muted">Panoramic Court</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-black text-text-primary">
+                    Rp{metrics.padelRevenue.toLocaleString('id-ID')}
+                  </p>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60 inline-block mt-0.5">
+                    {metrics.padelPct}%
+                  </span>
+                </div>
               </div>
-              <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${metrics.badmintonPct}%` }} />
+
+              {/* Badminton */}
+              <div className="p-3.5 bg-surface-container-low rounded-2xl border border-border/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                    <SportIcon type="BADMINTON" className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-text-primary">Badminton Hall</h4>
+                    <p className="text-[11px] text-text-muted">GOR Lapangan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-black text-text-primary">
+                    Rp{metrics.badmintonRevenue.toLocaleString('id-ID')}
+                  </p>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 inline-block mt-0.5">
+                    {metrics.badmintonPct}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
