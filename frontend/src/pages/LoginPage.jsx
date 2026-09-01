@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react'
+import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import Logo from '../components/Logo'
 
@@ -14,7 +14,9 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState(isAdminTarget ? 'admin@court.in' : '')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   // Redirect if already authenticated as the correct role
   useEffect(() => {
@@ -31,12 +33,26 @@ export default function LoginPage() {
     e.preventDefault()
     setErrorMsg('')
 
-    if (!email || !password) {
-      setErrorMsg('Harap isi email dan kata sandi.')
+    const errors = {}
+    const cleanEmail = email.trim().toLowerCase()
+
+    if (!cleanEmail) {
+      errors.email = 'Alamat email wajib diisi.'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      errors.email = 'Format email tidak valid (contoh: nama@email.com).'
+    }
+
+    if (!password) {
+      errors.password = 'Kata sandi wajib diisi.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
       return
     }
 
-    const res = await login(email, password)
+    setFieldErrors({})
+    const res = await login(cleanEmail, password)
     if (res.success) {
       navigate(redirectPath, { replace: true })
     } else {
@@ -78,9 +94,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
+        {/* Form with noValidate */}
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">
               Alamat Email
             </label>
@@ -89,16 +105,28 @@ export default function LoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: '' }))
+                }}
                 placeholder={isAdminTarget ? 'admin@court.in' : 'nama@email.com'}
-                required
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-colors"
+                className={`w-full pl-10 pr-4 py-3 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-colors ${
+                  fieldErrors.email
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
             </div>
+            {fieldErrors.email && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.email}</span>
+              </p>
+            )}
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                 Kata Sandi
@@ -117,15 +145,35 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: '' }))
+                }}
                 placeholder="••••••••"
-                required
                 autoComplete="current-password"
-                className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-colors"
+                className={`w-full pl-10 pr-11 py-3 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-colors ${
+                  fieldErrors.password
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.password}</span>
+              </p>
+            )}
           </div>
 
           <button

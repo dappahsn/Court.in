@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -33,51 +34,63 @@ export default function RegisterPage() {
   const handlePhoneChange = (e) => {
     const val = e.target.value.replace(/\D/g, '')
     setPhone(val)
+    if (fieldErrors.phone) {
+      setFieldErrors((prev) => ({ ...prev, phone: '' }))
+    }
+  }
+
+  const validateAll = () => {
+    const errors = {}
+    const cleanName = fullName.trim()
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanPhone = phone.replace(/\D/g, '')
+
+    if (!cleanName) {
+      errors.fullName = 'Nama lengkap wajib diisi.'
+    } else if (cleanName.length < 3) {
+      errors.fullName = 'Nama lengkap minimal 3 karakter.'
+    }
+
+    if (!cleanEmail) {
+      errors.email = 'Alamat email wajib diisi.'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      errors.email = 'Format email tidak valid (contoh: nama@email.com).'
+    }
+
+    if (!cleanPhone) {
+      errors.phone = 'Nomor WhatsApp/HP wajib diisi.'
+    } else if (cleanPhone.length < 10) {
+      errors.phone = 'Nomor HP minimal 10 digit angka (contoh: 081234567890).'
+    } else if (cleanPhone.length > 15) {
+      errors.phone = 'Nomor HP maksimal 15 digit angka.'
+    }
+
+    if (!birthDate) {
+      errors.birthDate = 'Tanggal lahir wajib dipilih.'
+    } else if (new Date(birthDate) > new Date()) {
+      errors.birthDate = 'Tanggal lahir tidak boleh di masa depan.'
+    }
+
+    if (!password) {
+      errors.password = 'Kata sandi wajib diisi.'
+    } else if (password.length < 8) {
+      errors.password = 'Kata sandi minimal 8 karakter.'
+    }
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
 
+    const isValid = validateAll()
+    if (!isValid) return
+
     const cleanName = fullName.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '')
-
-    if (cleanName.length < 3) {
-      setErrorMsg('Nama lengkap harus minimal 3 karakter.')
-      return
-    }
-
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)
-    if (!isEmailValid) {
-      setErrorMsg('Format email tidak valid. Pastikan menyertakan @ dan domain yang benar.')
-      return
-    }
-
-    if (cleanPhone.length < 10) {
-      setErrorMsg('Nomor HP/WhatsApp harus minimal 10 digit angka (contoh: 081234567890).')
-      return
-    }
-
-    if (cleanPhone.length > 15) {
-      setErrorMsg('Nomor HP/WhatsApp maksimal 15 digit angka.')
-      return
-    }
-
-    if (!birthDate) {
-      setErrorMsg('Harap masukkan tanggal lahir Anda.')
-      return
-    }
-
-    if (new Date(birthDate) > new Date()) {
-      setErrorMsg('Tanggal lahir tidak valid.')
-      return
-    }
-
-    if (password.length < 8) {
-      setErrorMsg('Kata sandi harus minimal 8 karakter.')
-      return
-    }
 
     const res = await register({
       full_name: cleanName,
@@ -121,10 +134,10 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form with noValidate to block native browser popups */}
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           {/* 1. Nama Lengkap */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
               Nama Lengkap
             </label>
@@ -133,16 +146,28 @@ export default function RegisterPage() {
               <input
                 type="text"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  setFullName(e.target.value)
+                  if (fieldErrors.fullName) setFieldErrors((p) => ({ ...p, fullName: '' }))
+                }}
                 placeholder="Muhammad Daffa"
-                required
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-all placeholder:text-text-muted/60"
+                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all placeholder:text-text-muted/60 ${
+                  fieldErrors.fullName
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
             </div>
+            {fieldErrors.fullName && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.fullName}</span>
+              </p>
+            )}
           </div>
 
           {/* 2. Alamat Email */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
               Alamat Email
             </label>
@@ -151,18 +176,30 @@ export default function RegisterPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: '' }))
+                }}
                 placeholder="nama@email.com"
-                required
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-all placeholder:text-text-muted/60"
+                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all placeholder:text-text-muted/60 ${
+                  fieldErrors.email
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
             </div>
+            {fieldErrors.email && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.email}</span>
+              </p>
+            )}
           </div>
 
           {/* 3. Nomor HP / WhatsApp */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
-              No. WhatsApp
+              No. WhatsApp / HP
             </label>
             <div className="relative">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
@@ -172,14 +209,23 @@ export default function RegisterPage() {
                 onChange={handlePhoneChange}
                 placeholder="081234567890"
                 maxLength={15}
-                required
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-all placeholder:text-text-muted/60"
+                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all placeholder:text-text-muted/60 ${
+                  fieldErrors.phone
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
             </div>
+            {fieldErrors.phone && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.phone}</span>
+              </p>
+            )}
           </div>
 
           {/* 4. Tanggal Lahir */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
               Tanggal Lahir
             </label>
@@ -189,28 +235,45 @@ export default function RegisterPage() {
                 type="date"
                 value={birthDate}
                 max={maxDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-all"
+                onChange={(e) => {
+                  setBirthDate(e.target.value)
+                  if (fieldErrors.birthDate) setFieldErrors((p) => ({ ...p, birthDate: '' }))
+                }}
+                className={`w-full pl-10 pr-4 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all ${
+                  fieldErrors.birthDate
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
             </div>
+            {fieldErrors.birthDate && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.birthDate}</span>
+              </p>
+            )}
           </div>
 
           {/* 5. Kata Sandi */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="block text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
-              Kata Sandi (Minimal 8 Karakter)
+              Kata Sandi
             </label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                minLength={8}
-                required
-                className="w-full pl-10 pr-11 py-2.5 bg-surface-container-low border border-border rounded-xl text-sm text-text-primary focus:bg-surface focus:border-primary focus:outline-none transition-all placeholder:text-text-muted/60"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: '' }))
+                }}
+                placeholder="Minimal 8 karakter"
+                className={`w-full pl-10 pr-11 py-2.5 bg-surface-container-low border rounded-xl text-sm text-text-primary focus:bg-surface focus:outline-none transition-all placeholder:text-text-muted/60 ${
+                  fieldErrors.password
+                    ? 'border-danger/80 focus:border-danger bg-danger/5 ring-1 ring-danger/20'
+                    : 'border-border focus:border-primary'
+                }`}
               />
               <button
                 type="button"
@@ -221,18 +284,24 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-[11px] text-danger font-medium flex items-center gap-1 mt-1 animate-slide-in">
+                <AlertCircle size={12} className="shrink-0" />
+                <span>{fieldErrors.password}</span>
+              </p>
+            )}
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-xl font-bold text-sm bg-primary hover:bg-primary-container text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+            className="w-full py-3.5 rounded-xl font-bold text-sm bg-primary hover:bg-primary-container text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 mt-2"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Mendaftarkan...</span>
+                <span>Mendaftarkan ke Cloud...</span>
               </span>
             ) : (
               <>
