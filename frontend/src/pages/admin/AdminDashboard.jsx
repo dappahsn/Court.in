@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   TrendingUp, Calendar, DollarSign, Clock,
   Plus, ArrowRight,
-  ArrowUpRight, Users, UserCheck, Settings, Star,
+  Users, UserCheck, Settings, Star,
   Activity, Award
 } from 'lucide-react'
 import useBookingStore from '../../stores/bookingStore'
@@ -348,13 +348,9 @@ export default function AdminDashboard() {
               <h3 className="font-bold text-base text-text-primary">Distribusi Omset per Cabang Olahraga</h3>
               <p className="text-xs text-text-muted mt-0.5">Kontribusi pendapatan dari sewa lapangan Futsal, Badminton, & Padel</p>
             </div>
-            <Link
-              to="/admin/analytics"
-              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-            >
-              <span>Laporan Lengkap</span>
-              <ArrowUpRight size={13} />
-            </Link>
+            <span className="text-xs font-semibold text-text-muted">
+              Real-Time
+            </span>
           </div>
 
           <div className="space-y-4">

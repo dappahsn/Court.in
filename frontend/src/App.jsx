@@ -25,7 +25,6 @@ import AdminBookings from './pages/admin/AdminBookings'
 import AdminSchedule from './pages/admin/AdminSchedule'
 import AdminCourts from './pages/admin/AdminCourts'
 import AdminCustomers from './pages/admin/AdminCustomers'
-import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminStaff from './pages/admin/AdminStaff'
 import AdminSettings from './pages/admin/AdminSettings'
 import AdminNotifications from './pages/admin/AdminNotifications'
@@ -117,7 +116,6 @@ function App() {
         <Route path="schedule" element={<AdminSchedule />} />
         <Route path="courts" element={<AdminCourts />} />
         <Route path="customers" element={<AdminCustomers />} />
-        <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="staff" element={<AdminStaff />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="notifications" element={<AdminNotifications />} />

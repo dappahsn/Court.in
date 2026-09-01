@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarCheck, Clock,
-  MapPin, Users, BarChart3, UserCheck, Settings,
+  MapPin, Users, UserCheck, Settings,
   QrCode, LogOut, ExternalLink, Menu, X,
   CheckCircle2, Bell, AlertCircle, Star
 } from 'lucide-react'
@@ -18,7 +18,6 @@ const ADMIN_NAV_ITEMS = [
   { to: '/admin/courts', label: 'Kelola Lapangan', icon: MapPin },
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/reviews', label: 'Ulasan & Rating', icon: Star },
-  { to: '/admin/analytics', label: 'Report & Analytics', icon: BarChart3 },
   { to: '/admin/staff', label: 'Manage Staff', icon: UserCheck },
   { to: '/admin/notifications', label: 'Notifikasi', icon: Bell },
   { to: '/admin/settings', label: 'Bisnis Settings', icon: Settings },
