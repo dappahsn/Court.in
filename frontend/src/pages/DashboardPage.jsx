@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar, Clock, QrCode, Star, CheckCircle2,
-  AlertCircle, X, Ticket, Lock, ArrowRight, Sparkles, Edit3
+  AlertCircle, X, Ticket, Lock, ArrowRight, Edit3
 } from 'lucide-react'
 import useBookingStore from '../stores/bookingStore'
 import useAuthStore from '../stores/authStore'
@@ -463,48 +463,45 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Thank You Review Modal (Popup Terima Kasih) ── */}
+      {/* ── Review Success Modal (Popup Sederhana & Bersih) ── */}
       {thankYouModalOpen && submittedReviewData && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-surface w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl border border-border space-y-5 animate-slide-in text-center relative">
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-sm rounded-2xl p-6 shadow-xl border border-border space-y-4 animate-slide-in text-center relative">
             <button
               type="button"
               onClick={() => setThankYouModalOpen(false)}
-              className="absolute top-5 right-5 text-text-muted hover:text-text-primary p-1 cursor-pointer"
+              className="absolute top-4 right-4 text-text-muted hover:text-text-primary p-1 cursor-pointer"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
-            {/* Glowing Trophy / Sparkles Icon */}
-            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-              <Sparkles size={32} className="animate-pulse" />
+            {/* Simple Check Icon */}
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
+              <CheckCircle2 size={24} />
             </div>
 
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-block">
-                Ulasan Terverifikasi
-              </span>
-              <h3 className="text-xl font-extrabold text-text-primary">Terima Kasih! 🎉</h3>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                Ulasan Anda untuk <strong>{submittedReviewData.court_name}</strong> telah berhasil diterbitkan dan sangat membantu pemain lain.
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-text-primary">Ulasan Terkirim</h3>
+              <p className="text-xs text-text-muted">
+                Terima kasih atas penilaian Anda untuk {submittedReviewData.court_name}.
               </p>
             </div>
 
             {/* Rating Snapshot Card */}
-            <div className="bg-surface-container-low rounded-2xl p-4 border border-border space-y-2 text-left">
+            <div className="bg-surface-container-low rounded-xl p-3.5 border border-border/80 text-left space-y-1.5">
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
                     key={s}
-                    size={16}
+                    size={14}
                     className={s <= submittedReviewData.rating ? 'fill-star-filled text-star-filled' : 'text-star-empty'}
                   />
                 ))}
-                <span className="text-xs font-extrabold text-text-primary ml-1.5">
-                  {submittedReviewData.rating}.0 / 5.0
+                <span className="text-xs font-bold text-text-primary ml-1">
+                  {submittedReviewData.rating}.0
                 </span>
               </div>
-              <p className="text-xs text-text-secondary italic line-clamp-2">
+              <p className="text-xs text-text-secondary line-clamp-2">
                 "{submittedReviewData.comment}"
               </p>
             </div>
@@ -512,9 +509,9 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setThankYouModalOpen(false)}
-              className="w-full py-3 bg-primary hover:bg-primary-container text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="w-full py-2.5 bg-primary hover:bg-primary-container text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
             >
-              Tutup & Kembali ke Dashboard
+              Tutup
             </button>
           </div>
         </div>
