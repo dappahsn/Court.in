@@ -10,7 +10,7 @@ import SportIcon from '../../components/SportIcon'
 import CustomSelect from '../../components/CustomSelect'
 
 export default function AdminReviews() {
-  const { reviews, replyReview, deleteReply, toggleFeatured, deleteReview } = useReviewStore()
+  const { reviews, replyReview, deleteReply, toggleFeatured, deleteReview, clearAllReviews } = useReviewStore()
   const { courts } = useCourtStore()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -91,7 +91,7 @@ export default function AdminReviews() {
           rev.court_name?.toLowerCase().includes(q) ||
           rev.comment?.toLowerCase().includes(q) ||
           rev.booking_id?.toLowerCase().includes(q)
-        if (!matchesSearch) return false
+        if (searchQuery.trim() && !matchesSearch) return false
 
         // Sport / Court
         if (selectedSport !== 'ALL' && rev.court_id !== selectedSport) {
@@ -99,7 +99,7 @@ export default function AdminReviews() {
         }
 
         // Rating
-        if (selectedRating !== 'ALL' && String(rev.rating) !== selectedRating) {
+        if (selectedRating !== 'ALL' && Math.round(rev.rating) !== parseInt(selectedRating, 10)) {
           return false
         }
 
@@ -112,7 +112,7 @@ export default function AdminReviews() {
       .sort((a, b) => {
         if (sortBy === 'HIGHEST') return b.rating - a.rating
         if (sortBy === 'LOWEST') return a.rating - b.rating
-        return new Date(b.date || 0) - new Date(a.date || 0)
+        return new Date(b.date || b.created_at || 0) - new Date(a.date || a.created_at || 0)
       })
   }, [reviews, searchQuery, selectedSport, selectedRating, selectedReplyStatus, sortBy])
 
@@ -153,7 +153,23 @@ export default function AdminReviews() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {reviews.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Yakin ingin menghapus seluruh riwayat ulasan yang ada?')) {
+                  clearAllReviews()
+                  showToast('Semua ulasan berhasil dikosongkan.')
+                }
+              }}
+              className="px-3.5 py-2 rounded-xl border border-danger/30 text-danger hover:bg-danger/10 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Hapus seluruh ulasan"
+            >
+              <Trash2 size={14} />
+              <span>Kosongkan Semua Ulasan</span>
+            </button>
+          )}
           <span className="px-3 py-1.5 rounded-xl bg-star-filled/15 text-star-filled border border-amber-300/40 text-xs font-extrabold flex items-center gap-1">
             <Star size={14} className="fill-star-filled" />
             {avgRating} / 5.0 Rating Venue

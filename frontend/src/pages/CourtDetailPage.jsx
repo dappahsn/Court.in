@@ -41,11 +41,16 @@ export default function CourtDetailPage() {
   const [copied, setCopied] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
 
-  // Live reviews for this court from reviewStore (with fallback to court.reviews)
+  // Live reviews for this court strictly from reviewStore
   const courtLiveReviews = useMemo(() => {
-    const matched = reviews.filter((r) => r.court_id === court?.id)
-    return matched.length > 0 ? matched : (court?.reviews || [])
+    return reviews.filter((r) => r.court_id === court?.id)
   }, [reviews, court])
+
+  const liveAvgRating = useMemo(() => {
+    if (courtLiveReviews.length === 0) return null
+    const sum = courtLiveReviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0)
+    return (sum / courtLiveReviews.length).toFixed(1)
+  }, [courtLiveReviews])
 
   // Compute live slots for this court and selected date
   const dynamicSlots = useMemo(() => {
@@ -226,69 +231,82 @@ export default function CourtDetailPage() {
                 <h3 className="text-base font-bold text-text-primary">Ulasan Terverifikasi</h3>
                 <p className="text-xs text-text-muted mt-0.5">Dari pemain yang telah selesai bermain di venue ini</p>
               </div>
-              <div className="flex items-center gap-1.5 bg-star-filled/15 text-text-primary px-3 py-1.5 rounded-xl font-bold text-sm">
-                <Star size={14} className="text-star-filled fill-star-filled" />
-                <span>{court.rating}</span>
-                <span className="text-text-muted text-xs font-normal">/ 5.0</span>
-              </div>
+              {liveAvgRating ? (
+                <div className="flex items-center gap-1.5 bg-star-filled/15 text-text-primary px-3 py-1.5 rounded-xl font-bold text-sm">
+                  <Star size={14} className="text-star-filled fill-star-filled" />
+                  <span>{liveAvgRating}</span>
+                  <span className="text-text-muted text-xs font-normal">/ 5.0 ({courtLiveReviews.length})</span>
+                </div>
+              ) : (
+                <span className="text-xs text-text-muted font-medium bg-surface-container-low px-2.5 py-1 rounded-lg border border-border">
+                  0 Ulasan
+                </span>
+              )}
             </div>
 
             {/* Reviews List */}
-            <div className="space-y-3">
-              {courtLiveReviews.map((rev) => (
-                <div key={rev.id} className="p-4 rounded-xl bg-surface-container-low border border-border/60 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
-                        {(rev.customer_name || rev.user_name || 'U').charAt(0)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold text-text-primary">
-                            {rev.customer_name || rev.user_name}
-                          </p>
-                          {rev.verified && (
-                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/50">
-                              Terverifikasi
-                            </span>
-                          )}
+            {courtLiveReviews.length > 0 ? (
+              <div className="space-y-3">
+                {courtLiveReviews.map((rev) => (
+                  <div key={rev.id} className="p-4 rounded-xl bg-surface-container-low border border-border/60 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
+                          {(rev.customer_name || rev.user_name || 'U').charAt(0)}
                         </div>
-                        <p className="text-[11px] text-text-muted">{rev.date}</p>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold text-text-primary">
+                              {rev.customer_name || rev.user_name}
+                            </p>
+                            {rev.verified && (
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/50">
+                                Terverifikasi
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-text-muted">{rev.date}</p>
+                        </div>
+                      </div>
+                      {/* Stars */}
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={12}
+                            className={
+                              star <= rev.rating
+                                ? 'text-star-filled fill-star-filled'
+                                : 'text-star-empty fill-star-empty'
+                            }
+                          />
+                        ))}
                       </div>
                     </div>
-                    {/* Stars */}
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={12}
-                          className={
-                            star <= rev.rating
-                              ? 'text-star-filled fill-star-filled'
-                              : 'text-star-empty fill-star-empty'
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    "{rev.comment}"
-                  </p>
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      "{rev.comment}"
+                    </p>
 
-                  {/* Admin Reply if exists */}
-                  {rev.admin_reply && (
-                    <div className="mt-2 pl-3.5 border-l-2 border-primary/40 bg-primary-light/40 p-2.5 rounded-r-xl space-y-1">
-                      <span className="text-[11px] font-bold text-primary flex items-center gap-1">
-                        Respon Pengelola Venue:
-                      </span>
-                      <p className="text-xs text-text-secondary leading-relaxed">
-                        {rev.admin_reply}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    {/* Admin Reply if exists */}
+                    {rev.admin_reply && (
+                      <div className="mt-2 pl-3.5 border-l-2 border-primary/40 bg-primary-light/40 p-2.5 rounded-r-xl space-y-1">
+                        <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                          Respon Pengelola Venue:
+                        </span>
+                        <p className="text-xs text-text-secondary leading-relaxed">
+                          {rev.admin_reply}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center bg-surface-container-low/40 rounded-2xl border border-dashed border-border/80 p-6 space-y-1.5">
+                <p className="text-sm font-bold text-text-primary">Belum Ada Ulasan</p>
+                <p className="text-xs text-text-secondary">Ulasan dari pemain yang telah selesai bermain akan otomatis tampil di sini.</p>
+              </div>
+            )}
           </div>
         </div>
 
