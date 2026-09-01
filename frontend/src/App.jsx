@@ -35,7 +35,27 @@ function App() {
   const { fetchProfile } = useAuthStore()
 
   useEffect(() => {
+    // 1. Initial fetch on startup/refresh
     fetchProfile()
+
+    // 2. Auto-fetch when user switches back to this browser tab on phone/laptop
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProfile()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchProfile()
+    }
+
+    window.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [fetchProfile])
 
   return (

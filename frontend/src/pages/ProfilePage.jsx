@@ -13,25 +13,24 @@ export default function ProfilePage() {
   const { user, updateProfile, isAuthenticated } = useAuthStore()
   const fileInputRef = useRef(null)
 
-  const getStoredAvatar = () => (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null) || user?.avatar_url || null
-
   const [activeTab, setActiveTab] = useState('personal')
   const [fullName, setFullName] = useState(() => user?.full_name || '')
   const [email, setEmail] = useState(() => user?.email || '')
   const [phone, setPhone] = useState(() => user?.phone_number || '')
   const [birthDate, setBirthDate] = useState('1998-08-15')
-  const [avatarUrl, setAvatarUrl] = useState(getStoredAvatar)
+  const [avatarUrl, setAvatarUrl] = useState(() => user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null))
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
-  // Adjust state during render if user changes
-  const [prevUserEmail, setPrevUserEmail] = useState(user?.email)
-  if (user?.email !== prevUserEmail) {
-    setPrevUserEmail(user?.email)
-    setFullName(user?.full_name || '')
-    setEmail(user?.email || '')
-    setPhone(user?.phone_number || '')
-    setAvatarUrl(getStoredAvatar())
+  // Sync state whenever fresh user data arrives from Supabase cloud
+  const [prevUserSnapshot, setPrevUserSnapshot] = useState(() => JSON.stringify(user || {}))
+  const currentUserSnapshot = JSON.stringify(user || {})
+  if (currentUserSnapshot !== prevUserSnapshot) {
+    setPrevUserSnapshot(currentUserSnapshot)
+    if (user?.full_name !== undefined) setFullName(user.full_name || '')
+    if (user?.email !== undefined) setEmail(user.email || '')
+    if (user?.phone_number !== undefined) setPhone(user.phone_number || '')
+    if (user?.avatar_url !== undefined) setAvatarUrl(user.avatar_url || null)
   }
 
   // Handle Photo File Selection

@@ -244,6 +244,13 @@ const useAuthStore = create((set, get) => ({
     set({ user: updatedUser })
     try {
       localStorage.setItem('courtin_user', JSON.stringify(updatedUser))
+      if (updatedData.avatar_url !== undefined) {
+        if (updatedData.avatar_url) {
+          localStorage.setItem('courtin_avatar_' + emailKey, updatedData.avatar_url)
+        } else {
+          localStorage.removeItem('courtin_avatar_' + emailKey)
+        }
+      }
     } catch (e) {
       console.error('Failed to update local user', e)
     }
@@ -258,15 +265,19 @@ const useAuthStore = create((set, get) => ({
       if (updatedData.avatar_url !== undefined) payload.avatar_url = updatedData.avatar_url
       if (updatedData.tier !== undefined) payload.tier = updatedData.tier
 
-      const { error } = await supabase
+      const { data: savedDbUser, error } = await supabase
         .from('users')
         .update(payload)
         .eq('email', emailKey)
+        .select()
+        .maybeSingle()
 
       if (error) {
         console.error('Supabase profile sync error:', error)
-      } else {
-        console.log('Profile successfully synced to Supabase Cloud!')
+      } else if (savedDbUser) {
+        delete savedDbUser.password_hash
+        localStorage.setItem('courtin_user', JSON.stringify(savedDbUser))
+        set({ user: savedDbUser })
       }
     } catch (err) {
       console.error('Failed to sync profile to Supabase', err)
@@ -274,7 +285,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   /**
-   * Fetch Fresh Profile from Supabase on App Startup
+   * Fetch Fresh Profile from Supabase on App Startup or Refresh
    */
   fetchProfile: async () => {
     const localUser = localStorage.getItem('courtin_user')
@@ -283,16 +294,23 @@ const useAuthStore = create((set, get) => ({
     try {
       const parsed = JSON.parse(localUser)
       if (parsed?.email) {
-        const { data: dbUser } = await supabase
+        const emailClean = parsed.email.toLowerCase()
+        const { data: dbUser, error } = await supabase
           .from('users')
           .select('*')
-          .eq('email', parsed.email.toLowerCase())
+          .eq('email', emailClean)
           .maybeSingle()
 
-        if (dbUser) {
+        if (dbUser && !error) {
           delete dbUser.password_hash
           localStorage.setItem('courtin_user', JSON.stringify(dbUser))
+          if (dbUser.avatar_url) {
+            localStorage.setItem('courtin_avatar_' + emailClean, dbUser.avatar_url)
+          } else {
+            localStorage.removeItem('courtin_avatar_' + emailClean)
+          }
           set({ user: dbUser, isAuthenticated: true })
+          return dbUser
         }
       }
     } catch (err) {
