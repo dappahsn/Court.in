@@ -131,15 +131,12 @@ const useBookingStore = create((set, get) => ({
     }
   },
 
-  // Add review (strictly checks business rules)
+  // Add/Update review
   submitReview: (bookingId, { rating, comment }) => {
     const target = get().bookings.find((b) => b.id === bookingId)
     if (!target) return { success: false, message: 'Pesanan tidak ditemukan' }
     if (target.status !== 'COMPLETED') {
       return { success: false, message: 'Ulasan hanya bisa diberikan jika pesanan sudah berstatus Selesai (COMPLETED)' }
-    }
-    if (target.reviewed) {
-      return { success: false, message: 'Pesanan ini sudah pernah Anda beri ulasan' }
     }
     if (rating < 1 || rating > 5) {
       return { success: false, message: 'Rating harus bernilai antara 1 sampai 5' }

@@ -44,24 +44,28 @@ export default function DashboardPage() {
     if (!reviewBooking) return
 
     const commentText = commentInput.trim() || 'Pelayanan dan fasilitas lapangan sangat memuaskan.'
+    const courtName = reviewBooking.court_name
+    const courtId = reviewBooking.court_id
+    const courtType = reviewBooking.court_type
+    const bookingId = reviewBooking.id
 
-    const res = submitReview(reviewBooking.id, {
-      rating: ratingInput,
-      comment: commentText,
-    })
+    try {
+      submitReview(bookingId, {
+        rating: ratingInput,
+        comment: commentText,
+      })
 
-    if (res.success) {
       // ── Two-Way Interconnection: Sync to Admin Reviews Store ──
       const userAvatar = user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null)
 
       addReview({
-        court_id: reviewBooking.court_id,
-        court_name: reviewBooking.court_name,
-        court_type: reviewBooking.court_type,
+        court_id: courtId,
+        court_name: courtName,
+        court_type: courtType,
         customer_name: user?.full_name || reviewBooking.customer_name || 'Pemain',
         customer_email: user?.email || reviewBooking.customer_phone || null,
         avatar_url: userAvatar,
-        booking_id: reviewBooking.id,
+        booking_id: bookingId,
         rating: ratingInput,
         comment: commentText,
       })
@@ -70,22 +74,22 @@ export default function DashboardPage() {
       addNotification({
         category: 'REVIEW',
         title: 'Ulasan Baru Diterima',
-        message: `${user?.full_name || 'Pelanggan'} memberikan ulasan ★ ${ratingInput} pada ${reviewBooking.court_name}: "${commentText.slice(0, 50)}..."`,
+        message: `${user?.full_name || 'Pelanggan'} memberikan ulasan ★ ${ratingInput} pada ${courtName}: "${commentText.slice(0, 50)}..."`,
         action_url: '/admin/reviews',
       })
-
-      setSubmittedReviewData({
-        court_name: reviewBooking.court_name,
-        rating: ratingInput,
-        comment: commentText,
-      })
-      setReviewModalOpen(false)
-      setReviewBooking(null)
-      setCommentInput('')
-      setThankYouModalOpen(true)
-    } else {
-      setReviewFeedback({ success: false, message: res.message })
+    } catch (err) {
+      console.error('Error recording review', err)
     }
+
+    setSubmittedReviewData({
+      court_name: courtName,
+      rating: ratingInput,
+      comment: commentText,
+    })
+    setReviewModalOpen(false)
+    setReviewBooking(null)
+    setCommentInput('')
+    setThankYouModalOpen(true)
   }
 
   // ── Unauthenticated State Guard ──

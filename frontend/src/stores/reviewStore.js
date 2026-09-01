@@ -15,8 +15,28 @@ const loadSavedReviews = () => {
 const useReviewStore = create((set, get) => ({
   reviews: loadSavedReviews(),
 
-  // Add new customer review
+  // Add or update customer review
   addReview: (reviewData) => {
+    const existingIdx = get().reviews.findIndex(
+      (r) => r.booking_id && reviewData.booking_id && r.booking_id === reviewData.booking_id
+    )
+
+    if (existingIdx >= 0) {
+      const updated = [...get().reviews]
+      updated[existingIdx] = {
+        ...updated[existingIdx],
+        ...reviewData,
+        date: new Date().toISOString().slice(0, 10),
+      }
+      set({ reviews: updated })
+      try {
+        localStorage.setItem('courtin_reviews', JSON.stringify(updated))
+      } catch (e) {
+        console.error('Failed to save reviews', e)
+      }
+      return updated[existingIdx]
+    }
+
     const newId = `rev-${Date.now()}`
     const newRev = {
       id: newId,
