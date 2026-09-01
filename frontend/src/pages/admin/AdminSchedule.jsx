@@ -42,6 +42,11 @@ export default function AdminSchedule() {
   const availableCount = computedSlots.filter((s) => s.isAvailable).length
 
   const handleSlotClick = (slot) => {
+    if (slot.isPast) {
+      showToast(`Slot ${slot.time} sudah lewat dari waktu operasional saat ini.`)
+      return
+    }
+
     if (slot.booking) {
       showToast(
         `Slot ${slot.time} terisi oleh pesanan aktif (${slot.booking.customer_name} - ${slot.booking.id}). Kelola pada menu Manajemen Booking.`
@@ -155,17 +160,20 @@ export default function AdminSchedule() {
             {computedSlots.map((slot) => {
               const isBooked = !!slot.booking
               const isManual = slot.isManualLock
+              const isPast = slot.isPast
 
               return (
                 <div
                   key={slot.time}
                   onClick={() => handleSlotClick(slot)}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-3 relative ${
-                    isBooked
-                      ? 'bg-rose-50/70 border-rose-300 shadow-2xs hover:border-rose-500'
+                  className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-3 relative ${
+                    isPast
+                      ? 'bg-surface-container/60 border-border opacity-60 cursor-not-allowed'
+                      : isBooked
+                      ? 'bg-rose-50/70 border-rose-300 shadow-2xs hover:border-rose-500 cursor-pointer'
                       : isManual
-                      ? 'bg-amber-50/70 border-amber-300 shadow-2xs hover:border-amber-500'
-                      : 'bg-surface border-emerald-300 hover:border-emerald-500 hover:shadow-xs'
+                      ? 'bg-amber-50/70 border-amber-300 shadow-2xs hover:border-amber-500 cursor-pointer'
+                      : 'bg-surface border-emerald-300 hover:border-emerald-500 hover:shadow-xs cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -173,21 +181,37 @@ export default function AdminSchedule() {
                       <Clock
                         size={15}
                         className={
-                          isBooked ? 'text-rose-600' : isManual ? 'text-amber-600' : 'text-emerald-600'
+                          isPast
+                            ? 'text-text-muted'
+                            : isBooked
+                            ? 'text-rose-600'
+                            : isManual
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
                         }
                       />
                       {slot.time}
                     </span>
                     <span
                       className={`w-2.5 h-2.5 rounded-full ${
-                        isBooked ? 'bg-rose-500 animate-pulse' : isManual ? 'bg-amber-500' : 'bg-emerald-500'
+                        isPast
+                          ? 'bg-slate-400'
+                          : isBooked
+                          ? 'bg-rose-500 animate-pulse'
+                          : isManual
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
                       }`}
                     />
                   </div>
 
                   {/* Booking Info or Open status */}
                   <div className="text-xs space-y-1">
-                    {isBooked ? (
+                    {isPast ? (
+                      <p className="text-[11px] text-text-muted font-semibold">
+                        Sudah Lewat Waktu Real-Time
+                      </p>
+                    ) : isBooked ? (
                       <div className="space-y-0.5">
                         <p className="font-bold text-rose-700 truncate flex items-center gap-1 text-[11px]">
                           <User size={12} /> {slot.booking.customer_name}
@@ -212,14 +236,20 @@ export default function AdminSchedule() {
                     <span className="text-text-muted text-[11px]">Status Slot</span>
                     <span
                       className={`font-extrabold text-[11px] flex items-center gap-1 ${
-                        isBooked
+                        isPast
+                          ? 'text-text-muted'
+                          : isBooked
                           ? 'text-rose-600'
                           : isManual
                           ? 'text-amber-600'
                           : 'text-emerald-600'
                       }`}
                     >
-                      {isBooked ? (
+                      {isPast ? (
+                        <>
+                          <Lock size={12} /> LEWAT JAM
+                        </>
+                      ) : isBooked ? (
                         <>
                           <Lock size={12} /> TERPESAN
                         </>

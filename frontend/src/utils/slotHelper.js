@@ -1,7 +1,7 @@
 /**
  * Unified Slot and Schedule Helper
- * Automatically computes real-time slot availability based on actual customer bookings
- * and venue operational rules.
+ * Automatically computes real-time slot availability based on actual customer bookings,
+ * current real-time clock (locking past hours), and venue operational rules.
  */
 
 export const OPERATIONAL_SLOTS = [
@@ -21,6 +21,49 @@ export const OPERATIONAL_SLOTS = [
   '21:00 - 22:00',
   '22:00 - 23:00',
 ]
+
+/**
+ * Checks if a slot on a given date has already passed compared to the current real-time clock.
+ */
+export function isSlotPastRealTime(dateStr, slotTime) {
+  if (!dateStr || !slotTime) return false
+
+  const now = new Date()
+  const todayYear = now.getFullYear()
+  const todayMonth = String(now.getMonth() + 1).padStart(2, '0')
+  const todayDay = String(now.getDate()).padStart(2, '0')
+  const todayStr = `${todayYear}-${todayMonth}-${todayDay}`
+
+  // 1. If date is in the past (e.g. yesterday)
+  if (dateStr < todayStr) {
+    return true
+  }
+
+  // 2. If date is in the future (e.g. tomorrow or next week)
+  if (dateStr > todayStr) {
+    return false
+  }
+
+  // 3. If date is TODAY, compare hour and minute
+  const [slotStart] = slotTime.split(' - ')
+  if (!slotStart) return false
+
+  const [slotHourStr, slotMinuteStr] = slotStart.split(':')
+  const slotHour = parseInt(slotHourStr, 10)
+  const slotMinute = parseInt(slotMinuteStr, 10)
+
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+
+  if (currentHour > slotHour) {
+    return true
+  }
+  if (currentHour === slotHour && currentMinute >= slotMinute) {
+    return true
+  }
+
+  return false
+}
 
 /**
  * Checks if a specific court has an active customer booking for a date and time slot.
@@ -57,9 +100,10 @@ export function getSlotBooking(bookings = [], courtId, date, slotTime) {
  * Get comprehensive slot list for a court on a given date.
  * Each slot item contains:
  * - time: string e.g. '19:00 - 20:00'
- * - isAvailable: boolean (true if open, false if booked or manually locked)
+ * - isAvailable: boolean (true if open and in future, false if booked, manually locked, or past real time)
  * - booking: Object | null (booking details if booked)
  * - isManualLock: boolean (true if admin locked for maintenance)
+ * - isPast: boolean (true if slot time has passed real-time clock)
  */
 export function getCourtSlotsForDate(court, date, bookings = [], manualLocks = {}) {
   const courtId = court?.id || ''
@@ -68,15 +112,19 @@ export function getCourtSlotsForDate(court, date, bookings = [], manualLocks = {
     const booking = getSlotBooking(bookings, courtId, date, time)
     const lockKey = `${courtId}_${date}_${time}`
     const isManualLock = !!manualLocks[lockKey]
+    const isPast = isSlotPastRealTime(date, time)
 
-    const isAvailable = !booking && !isManualLock
+    const isAvailable = !booking && !isManualLock && !isPast
 
     return {
       time,
       isAvailable,
       booking,
       isManualLock,
-      statusLabel: booking
+      isPast,
+      statusLabel: isPast
+        ? 'Lewat Jam / Selesai'
+        : booking
         ? `Terpesan (${booking.customer_name})`
         : isManualLock
         ? 'Terkunci (Maintenance)'

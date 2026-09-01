@@ -375,8 +375,10 @@ export default function CourtDetailPage() {
                     >
                       <span>{slot.time}</span>
                       {!isAvailable && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-500 no-underline">
-                          {slot.booking ? 'Terisi' : 'Terkunci'}
+                        <span className={`text-[9px] font-bold uppercase tracking-wider no-underline ${
+                          slot.isPast ? 'text-text-muted' : 'text-rose-500'
+                        }`}>
+                          {slot.isPast ? 'Lewat Jam' : slot.booking ? 'Terisi' : 'Terkunci'}
                         </span>
                       )}
                     </button>
