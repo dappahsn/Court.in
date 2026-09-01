@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import useBookingStore from '../../stores/bookingStore'
 
+const INDONESIAN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+
 export default function SalesTrendChart({ timeRange = '7days' }) {
   const { bookings } = useBookingStore()
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -8,19 +10,110 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
   // Pure 100% real data matched directly from bookings store
   const chartData = useMemo(() => {
     const today = new Date()
-    const daysCount = timeRange === 'today' ? 7 : timeRange === '30days' ? 30 : 7
+
+    // ── 1. Rentang 1 Tahun (12 Bulan) ──
+    if (timeRange === '1year') {
+      const result = []
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
+        const yearMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        const label = INDONESIAN_MONTHS[d.getMonth()]
+        const fullLabel = `${INDONESIAN_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+
+        const matchedBookings = bookings.filter((b) => {
+          const bDate = b.booking_date || b.created_at?.slice(0, 10) || ''
+          return bDate.startsWith(yearMonthStr) && b.status !== 'CANCELLED'
+        })
+
+        const realRevenue = matchedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
+        const bookingCount = matchedBookings.length
+
+        result.push({
+          dateStr: yearMonthStr,
+          label,
+          fullLabel,
+          revenue: realRevenue,
+          count: bookingCount,
+          showLabel: true,
+        })
+      }
+      return result
+    }
+
+    // ── 2. Rentang 1 Bulan (30 Hari dengan Label Rapi & Tidak Mepet) ──
+    if (timeRange === '1month') {
+      const result = []
+      const daysCount = 30
+      for (let i = daysCount - 1; i >= 0; i--) {
+        const d = new Date(today)
+        d.setDate(today.getDate() - i)
+
+        const dateStr = d.toISOString().slice(0, 10)
+        const dayName = `${d.getDate()} ${INDONESIAN_MONTHS[d.getMonth()]}`
+
+        const matchedBookings = bookings.filter((b) => {
+          const bDate = b.booking_date || b.created_at?.slice(0, 10)
+          return bDate === dateStr && b.status !== 'CANCELLED'
+        })
+
+        const realRevenue = matchedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
+        const bookingCount = matchedBookings.length
+
+        // Tampilkan label tiap kelipatan 5 hari dan hari terakhir agar tidak berhimpitan
+        const showLabel = (daysCount - 1 - i) % 5 === 0 || i === 0
+
+        result.push({
+          dateStr,
+          label: dayName,
+          fullLabel: dayName,
+          revenue: realRevenue,
+          count: bookingCount,
+          showLabel,
+        })
+      }
+      return result
+    }
+
+    // ── 3. Rentang Hari Ini (Per Jam Operasional) ──
+    if (timeRange === 'today') {
+      const result = []
+      const todayStr = today.toISOString().slice(0, 10)
+      const hours = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00']
+
+      hours.forEach((h) => {
+        const hNum = parseInt(h.split(':')[0], 10)
+        const matchedBookings = bookings.filter((b) => {
+          const bDate = b.booking_date || b.created_at?.slice(0, 10)
+          if (bDate !== todayStr || b.status === 'CANCELLED') return false
+          const startH = parseInt((b.start_time || '00:00').split(':')[0], 10)
+          return startH >= hNum && startH < hNum + 2
+        })
+
+        const realRevenue = matchedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
+        const bookingCount = matchedBookings.length
+
+        result.push({
+          dateStr: `${todayStr} ${h}`,
+          label: h,
+          fullLabel: `Hari Ini (${h} WIB)`,
+          revenue: realRevenue,
+          count: bookingCount,
+          showLabel: true,
+        })
+      })
+      return result
+    }
+
+    // ── 4. Rentang Standar 7 Hari ──
     const result = []
-
-    const indonesianMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-
+    const daysCount = 7
     for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date(today)
       d.setDate(today.getDate() - i)
 
       const dateStr = d.toISOString().slice(0, 10)
-      const dayName = `${d.getDate()} ${indonesianMonths[d.getMonth()]}`
+      const dayName = `${d.getDate()} ${INDONESIAN_MONTHS[d.getMonth()]}`
 
-      // Strictly real bookings matched by date
       const matchedBookings = bookings.filter((b) => {
         const bDate = b.booking_date || b.created_at?.slice(0, 10)
         return bDate === dateStr && b.status !== 'CANCELLED'
@@ -32,11 +125,12 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
       result.push({
         dateStr,
         label: dayName,
-        revenue: realRevenue, // 0 if no real bookings on this day
+        fullLabel: dayName,
+        revenue: realRevenue,
         count: bookingCount,
+        showLabel: true,
       })
     }
-
     return result
   }, [bookings, timeRange])
 
@@ -172,17 +266,19 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
         {/* X-Axis Date Labels & Hover Columns */}
         {points.map((p, idx) => (
           <g key={idx}>
-            {/* X-axis label */}
-            <text
-              x={p.x}
-              y={height - paddingBottom + 18}
-              textAnchor="middle"
-              className={`text-[10px] font-medium transition-colors ${
-                hoveredIndex === idx ? 'fill-primary font-bold' : 'fill-text-muted'
-              }`}
-            >
-              {p.label}
-            </text>
+            {/* X-axis label (only rendered if showLabel is true) */}
+            {p.showLabel && (
+              <text
+                x={p.x}
+                y={height - paddingBottom + 18}
+                textAnchor="middle"
+                className={`text-[10px] font-medium transition-colors ${
+                  hoveredIndex === idx ? 'fill-primary font-bold' : 'fill-text-muted'
+                }`}
+              >
+                {p.label}
+              </text>
+            )}
 
             {/* Hover vertical dotted guideline */}
             {hoveredIndex === idx && (
@@ -202,10 +298,16 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
             <circle
               cx={p.x}
               cy={p.y}
-              r={hoveredIndex === idx ? 6 : p.revenue > 0 ? 4.5 : 3.5}
+              r={
+                hoveredIndex === idx
+                  ? 6
+                  : timeRange === '1month'
+                  ? p.revenue > 0 ? 4 : 2
+                  : p.revenue > 0 ? 4.5 : 3.5
+              }
               fill="#ffffff"
               stroke={p.revenue > 0 ? '#2563eb' : '#94a3b8'}
-              strokeWidth={hoveredIndex === idx ? 3.5 : 2}
+              strokeWidth={hoveredIndex === idx ? 3.5 : timeRange === '1month' && p.revenue === 0 ? 1 : 2}
               className="transition-all duration-150 cursor-pointer"
               filter={hoveredIndex === idx ? 'url(#glowPoint)' : undefined}
             />
@@ -241,7 +343,7 @@ export default function SalesTrendChart({ timeRange = '7days' }) {
           }}
         >
           <div className="flex items-center gap-1.5 font-bold text-[11px] text-slate-300">
-            <span>{active.label}</span>
+            <span>{active.fullLabel || active.label}</span>
             <span>•</span>
             <span className="text-primary-light font-semibold">{active.count} booking</span>
           </div>

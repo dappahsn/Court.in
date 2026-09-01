@@ -145,13 +145,14 @@ export default function AdminDashboard() {
             {[
               { id: 'today', label: 'Hari Ini' },
               { id: '7days', label: '7 Hari' },
-              { id: '30days', label: '30 Hari' },
+              { id: '1month', label: '1 Bulan' },
+              { id: '1year', label: '1 Tahun' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setTimeRange(tab.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   timeRange === tab.id
                     ? 'bg-primary text-white shadow-2xs'
                     : 'text-text-secondary hover:text-text-primary'
@@ -251,11 +252,25 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-base sm:text-lg text-text-primary">Sales Trend</h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary-light text-primary uppercase">
-                  {timeRange === 'today' ? 'Hari Ini' : timeRange === '30days' ? '30 Hari' : '7 Hari'}
+                  {timeRange === 'today'
+                    ? 'Hari Ini'
+                    : timeRange === '1month'
+                    ? '1 Bulan'
+                    : timeRange === '1year'
+                    ? '1 Tahun'
+                    : '7 Hari'}
                 </span>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Pergerakan omset reservasi {timeRange === 'today' ? 'hari ini' : timeRange === '30days' ? 'selama 30 hari terakhir' : 'selama 7 hari terakhir'}
+                Pergerakan omset reservasi {
+                  timeRange === 'today'
+                    ? 'hari ini'
+                    : timeRange === '1month'
+                    ? 'selama 1 bulan terakhir'
+                    : timeRange === '1year'
+                    ? 'selama 1 tahun terakhir'
+                    : 'selama 7 hari terakhir'
+                }
               </p>
             </div>
 
