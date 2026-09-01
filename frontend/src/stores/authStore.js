@@ -44,10 +44,25 @@ const saveRegisteredUser = (user, password) => {
 }
 
 const savedToken = localStorage.getItem('courtin_token')
-const savedUser = localStorage.getItem('courtin_user')
+let savedUser = null
+try {
+  const raw = localStorage.getItem('courtin_user')
+  if (raw) {
+    savedUser = JSON.parse(raw)
+    // Enrich with stored avatar if available
+    if (savedUser?.email) {
+      const storedAvatar = localStorage.getItem('courtin_avatar_' + savedUser.email.toLowerCase())
+      if (storedAvatar) {
+        savedUser.avatar_url = storedAvatar
+      }
+    }
+  }
+} catch {
+  savedUser = null
+}
 
 const useAuthStore = create((set) => ({
-  user: savedUser ? JSON.parse(savedUser) : null,
+  user: savedUser,
   token: savedToken || null,
   isAuthenticated: !!savedToken && !!savedUser,
   isLoading: false,
@@ -58,10 +73,14 @@ const useAuthStore = create((set) => ({
   login: async (email, password) => {
     set({ isLoading: true })
     const emailClean = (email || '').trim().toLowerCase()
+    const storedAvatar = localStorage.getItem('courtin_avatar_' + emailClean)
 
     try {
       const res = await api.post('/auth/login', { email: emailClean, password })
       const { token, user } = res.data
+      if (storedAvatar && !user.avatar_url) {
+        user.avatar_url = storedAvatar
+      }
       localStorage.setItem('courtin_token', token)
       localStorage.setItem('courtin_user', JSON.stringify(user))
       saveRegisteredUser(user, password)
@@ -74,7 +93,10 @@ const useAuthStore = create((set) => ({
         if (password === 'Lampriet37!' || password === 'admin123' || password.length >= 6) {
           const token = 'jwt_live_admin_' + Date.now()
           const savedAdminProfile = localStorage.getItem('courtin_admin_profile')
-          const adminObj = savedAdminProfile ? JSON.parse(savedAdminProfile) : DEFAULT_ADMIN
+          const adminObj = savedAdminProfile ? JSON.parse(savedAdminProfile) : { ...DEFAULT_ADMIN }
+          if (storedAvatar) {
+            adminObj.avatar_url = storedAvatar
+          }
           localStorage.setItem('courtin_token', token)
           localStorage.setItem('courtin_user', JSON.stringify(adminObj))
           set({ user: adminObj, token, isAuthenticated: true, isLoading: false })
@@ -95,6 +117,9 @@ const useAuthStore = create((set) => ({
         }
         const userObj = { ...found }
         delete userObj.password
+        if (storedAvatar) {
+          userObj.avatar_url = storedAvatar
+        }
         const token = 'jwt_live_user_' + Date.now()
         localStorage.setItem('courtin_token', token)
         localStorage.setItem('courtin_user', JSON.stringify(userObj))
@@ -112,7 +137,7 @@ const useAuthStore = create((set) => ({
           role: emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
           tier: 'Regular Member',
           joined_date: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-          avatar_url: null,
+          avatar_url: storedAvatar || null,
         }
         saveRegisteredUser(newUser, password)
         const token = 'jwt_live_user_' + Date.now()
@@ -152,6 +177,7 @@ const useAuthStore = create((set) => ({
         return { success: false, message: 'Alamat email sudah terdaftar. Silakan masuk.' }
       }
 
+      const storedAvatar = localStorage.getItem('courtin_avatar_' + emailClean)
       const newUser = {
         id: 'usr_' + Date.now(),
         full_name: data.full_name,
@@ -160,7 +186,7 @@ const useAuthStore = create((set) => ({
         role: emailClean === 'admin@court.in' || emailClean.includes('admin') ? 'ADMIN' : 'CUSTOMER',
         tier: 'Regular Member',
         joined_date: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-        avatar_url: null,
+        avatar_url: storedAvatar || null,
       }
 
       saveRegisteredUser(newUser, data.password)
@@ -188,22 +214,33 @@ const useAuthStore = create((set) => ({
     let newUser
     set((state) => {
       newUser = { ...state.user, ...updatedData }
+      const emailKey = newUser.email?.toLowerCase()
+
       try {
         localStorage.setItem('courtin_user', JSON.stringify(newUser))
 
-        // Permanently persist to registered users database in localStorage
-        const users = getRegisteredUsers()
-        const existingIdx = users.findIndex((u) => u.email?.toLowerCase() === newUser.email?.toLowerCase())
-        if (existingIdx >= 0) {
-          users[existingIdx] = { ...users[existingIdx], ...newUser }
-        } else {
-          users.push(newUser)
-        }
-        localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+        if (emailKey) {
+          if (updatedData.avatar_url !== undefined) {
+            if (updatedData.avatar_url) {
+              localStorage.setItem('courtin_avatar_' + emailKey, updatedData.avatar_url)
+            } else {
+              localStorage.removeItem('courtin_avatar_' + emailKey)
+            }
+          }
 
-        // If admin profile updated, persist admin profile cache
-        if (newUser.email?.toLowerCase() === 'admin@court.in') {
-          localStorage.setItem('courtin_admin_profile', JSON.stringify(newUser))
+          // Persist to registered users store
+          const users = getRegisteredUsers()
+          const existingIdx = users.findIndex((u) => u.email?.toLowerCase() === emailKey)
+          if (existingIdx >= 0) {
+            users[existingIdx] = { ...users[existingIdx], ...newUser }
+          } else {
+            users.push(newUser)
+          }
+          localStorage.setItem('courtin_registered_users', JSON.stringify(users))
+
+          if (emailKey === 'admin@court.in') {
+            localStorage.setItem('courtin_admin_profile', JSON.stringify(newUser))
+          }
         }
       } catch (e) {
         console.error('Failed to persist updated user profile', e)
@@ -224,11 +261,21 @@ const useAuthStore = create((set) => ({
       const res = await api.get('/auth/me')
       set({ user: res.data.user, isAuthenticated: true })
     } catch {
-      // If token exists locally, preserve current authenticated user
       const localToken = localStorage.getItem('courtin_token')
       const localUser = localStorage.getItem('courtin_user')
       if (localToken && localUser) {
-        set({ user: JSON.parse(localUser), token: localToken, isAuthenticated: true })
+        try {
+          const parsed = JSON.parse(localUser)
+          if (parsed?.email) {
+            const storedAvatar = localStorage.getItem('courtin_avatar_' + parsed.email.toLowerCase())
+            if (storedAvatar) {
+              parsed.avatar_url = storedAvatar
+            }
+          }
+          set({ user: parsed, token: localToken, isAuthenticated: true })
+        } catch {
+          set({ user: null, token: null, isAuthenticated: false })
+        }
       } else {
         set({ user: null, token: null, isAuthenticated: false })
       }

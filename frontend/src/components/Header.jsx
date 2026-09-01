@@ -40,6 +40,8 @@ export default function Header() {
     navigate('/')
   }
 
+  const avatarImg = user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null)
+
   return (
     <header className="bg-surface/90 backdrop-blur-md border-b border-border sticky top-0 z-50 transition-all">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,16 +51,16 @@ export default function Header() {
             <Logo textClassName="text-xl sm:text-2xl font-black" markClassName="w-8 h-8 sm:w-9 sm:h-9" />
           </Link>
 
-          {/* Desktop Nav Links (Minimalist & Clean) */}
-          <nav className="hidden md:flex items-center gap-1" aria-label="Main Navigation">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                     isActive
-                      ? 'text-primary font-semibold bg-primary-light'
+                      ? 'bg-primary-light text-primary font-bold'
                       : 'text-text-secondary hover:text-text-primary hover:bg-surface-container-low'
                   }`
                 }
@@ -68,20 +70,20 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Right actions (Auth / User menu) */}
+          {/* User Auth Controls & Mobile Menu Toggle */}
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setProfileDropdown(!profileDropdown)}
-                  className="flex items-center gap-2.5 py-1.5 pl-2 pr-3 rounded-full border border-border bg-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-2xl hover:bg-surface-container-low border border-border transition-all cursor-pointer"
                   aria-expanded={profileDropdown}
                   aria-label="User menu"
                 >
                   <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-xs shadow-sm overflow-hidden shrink-0">
-                    {user?.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                    {avatarImg ? (
+                      <img src={avatarImg} alt={user?.full_name || 'User'} className="w-full h-full object-cover" />
                     ) : (
                       user?.full_name?.charAt(0) || <User size={14} />
                     )}
@@ -96,8 +98,8 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-56 bg-surface rounded-2xl shadow-xl border border-border py-2 z-50 animate-slide-in">
                     <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/80">
                       <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-xs shadow-sm overflow-hidden shrink-0">
-                        {user?.avatar_url ? (
-                          <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                        {avatarImg ? (
+                          <img src={avatarImg} alt={user?.full_name || 'User'} className="w-full h-full object-cover" />
                         ) : (
                           user?.full_name?.charAt(0) || <User size={14} />
                         )}

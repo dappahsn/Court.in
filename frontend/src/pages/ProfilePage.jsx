@@ -6,30 +6,42 @@ import {
 } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import SportIcon from '../components/SportIcon'
+import { compressAvatar } from '../utils/imageCompressor'
 
 export default function ProfilePage() {
   const { user, updateProfile, isAuthenticated } = useAuthStore()
   const fileInputRef = useRef(null)
 
+  const getStoredAvatar = () => (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null) || user?.avatar_url || null
+
   const [activeTab, setActiveTab] = useState('personal')
-  const [fullName, setFullName] = useState(user?.full_name || 'Muhammad Daffa Husen')
-  const [email, setEmail] = useState(user?.email || 'daffahusen@court.in')
-  const [phone, setPhone] = useState(user?.phone_number || '081234567890')
+  const [fullName, setFullName] = useState(() => user?.full_name || '')
+  const [email, setEmail] = useState(() => user?.email || '')
+  const [phone, setPhone] = useState(() => user?.phone_number || '')
   const [birthDate, setBirthDate] = useState('1998-08-15')
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null)
+  const [avatarUrl, setAvatarUrl] = useState(getStoredAvatar)
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
+  // Adjust state during render if user changes
+  const [prevUserEmail, setPrevUserEmail] = useState(user?.email)
+  if (user?.email !== prevUserEmail) {
+    setPrevUserEmail(user?.email)
+    setFullName(user?.full_name || '')
+    setEmail(user?.email || '')
+    setPhone(user?.phone_number || '')
+    setAvatarUrl(getStoredAvatar())
+  }
+
   // Handle Photo File Selection
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     setUploadError('')
 
     if (!file) return
 
-    // Limit to 3MB
-    if (file.size > 3 * 1024 * 1024) {
-      setUploadError('Ukuran file foto maksimal 3MB.')
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Ukuran file foto maksimal 5MB.')
       return
     }
 
@@ -38,21 +50,22 @@ export default function ProfilePage() {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const base64Image = reader.result
-      setAvatarUrl(base64Image)
-      updateProfile({ avatar_url: base64Image })
+    try {
+      const compressedImage = await compressAvatar(file, 256, 256, 0.85)
+      setAvatarUrl(compressedImage)
+      await updateProfile({ avatar_url: compressedImage })
       setSavedSuccess(true)
       setTimeout(() => setSavedSuccess(false), 3000)
+    } catch (err) {
+      console.error('Failed to compress avatar', err)
+      setUploadError('Gagal memproses gambar. Silakan coba gambar lain.')
     }
-    reader.readAsDataURL(file)
   }
 
   // Handle Remove Photo
-  const handleRemovePhoto = () => {
+  const handleRemovePhoto = async () => {
     setAvatarUrl(null)
-    updateProfile({ avatar_url: null })
+    await updateProfile({ avatar_url: null })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -60,9 +73,9 @@ export default function ProfilePage() {
     setTimeout(() => setSavedSuccess(false), 3000)
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    updateProfile({
+    await updateProfile({
       full_name: fullName,
       email,
       phone_number: phone,
