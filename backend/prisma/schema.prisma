@@ -1,0 +1,142 @@
+// Prisma Schema for court.in
+// Connected to PostgreSQL on Supabase
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  STAFF
+}
+
+enum SportType {
+  FUTSAL
+  PADEL
+  BADMINTON
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  PAY_AT_VENUE
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  full_name     String
+  email         String    @unique
+  password_hash String
+  phone_number  String?
+  role          Role      @default(CUSTOMER)
+  avatar_url    String?
+  tier          String    @default("Regular")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+
+  @@map("users")
+}
+
+model Court {
+  id             String    @id @default(uuid())
+  name           String
+  type           SportType
+  price_per_hour Int
+  environment    String    @default("Indoor")
+  surface        String
+  image_url      String
+  description    String?
+  location       String    @default("Banda Aceh")
+  address        String    @default("Jl. Teuku Umar No. 45, Seutui, Kota Banda Aceh")
+  status         String    @default("ACTIVE") // ACTIVE | MAINTENANCE | CLOSED
+  facilities     Json?     // Array of { name, icon }
+  rating         Float     @default(5.0)
+  reviews_count  Int       @default(0)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  bookings       Booking[]
+  reviews        Review[]
+
+  @@map("courts")
+}
+
+model Booking {
+  id             String        @id // Format: TKT-YYYY-MMDD-XXX
+  user_id        String?
+  user           User?         @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  customer_name  String
+  customer_email String
+  customer_phone String
+  court_id       String
+  court          Court         @relation(fields: [court_id], references: [id], onDelete: Cascade)
+  booking_date   String        // YYYY-MM-DD
+  start_time     String        // e.g. "19:00"
+  end_time       String        // e.g. "20:00"
+  time_slot      String?       // e.g. "19:00 - 20:00"
+  court_fee      Int
+  service_fee    Int           @default(2000)
+  total_price    Int
+  payment_method String        @default("QRIS") // QRIS | CASH
+  status         BookingStatus @default(PAID)
+  cancel_reason  String?
+  checked_in_at  DateTime?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  review         Review?
+
+  @@map("bookings")
+}
+
+model Review {
+  id             String    @id @default(uuid())
+  booking_id     String?   @unique
+  booking        Booking?  @relation(fields: [booking_id], references: [id], onDelete: SetNull)
+  user_id        String?
+  user           User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  court_id       String
+  court          Court     @relation(fields: [court_id], references: [id], onDelete: Cascade)
+  customer_name  String
+  rating         Int       @default(5)
+  comment        String
+  verified       Boolean   @default(true)
+  is_featured    Boolean   @default(false)
+  admin_reply    String?
+  admin_reply_at DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  @@map("reviews")
+}
+
+model BusinessSetting {
+  id                      String   @id @default(uuid())
+  venue_name              String   @default("court.in Sport Complex & Arena")
+  tagline                 String   @default("Platform Reservasi Lapangan Olahraga Terintegrasi")
+  phone_number            String   @default("0812-3456-7890")
+  email                   String   @default("admin@court.in")
+  address                 String   @default("Jl. Teuku Umar No. 45, Seutui, Kota Banda Aceh")
+  open_hour               String   @default("07:00")
+  close_hour              String   @default("23:00")
+  qris_timeout_minutes    Int      @default(15)
+  service_fee             Int      @default(2000)
+  allow_cash_payment      Boolean  @default(true)
+  auto_cancel_unpaid      Boolean  @default(true)
+  reschedule_notice_hours Int      @default(24)
+  updated_at              DateTime @updatedAt
+
+  @@map("business_settings")
+}
