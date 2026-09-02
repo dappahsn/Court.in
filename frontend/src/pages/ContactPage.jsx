@@ -127,7 +127,7 @@ export default function ContactPage() {
       {/* ── 1. Page Header ── */}
       <div className="text-center space-y-4 max-w-2xl mx-auto">
         <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight">
-          Hubungi Tim court.in
+          Hubungi Tim court<span className="text-primary">.in</span>
         </h1>
         <p className="text-base text-text-secondary leading-relaxed">
           Punya pertanyaan seputar reservasi, kendala pembayaran, atau ingin bermitra dengan kami? Tim kami siap membantu setiap hari.
@@ -191,7 +191,7 @@ export default function ContactPage() {
             Pertanyaan yang Sering Diajukan (FAQ)
           </h2>
           <p className="text-sm text-text-secondary">
-            Jawaban cepat untuk pertanyaan umum seputar pemesanan dan layanan court.in
+            Jawaban cepat untuk pertanyaan umum seputar pemesanan dan layanan court<span className="text-primary font-semibold">.in</span>
           </p>
         </div>
 
