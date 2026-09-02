@@ -125,7 +125,7 @@ export default function ContactPage() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-16 sm:space-y-24">
       {/* ── 1. Page Header ── */}
-      <div className="text-center space-y-4 max-w-2xl mx-auto">
+      <div className="text-center space-y-4 max-w-2xl mx-auto reveal-on-scroll">
         <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight">
           Hubungi Tim court<span className="text-primary">.in</span>
         </h1>
@@ -136,7 +136,7 @@ export default function ContactPage() {
 
       {/* ── 2. Quick Contact Cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3">
+        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3 reveal-on-scroll stagger-1">
           <div className="w-10 h-10 rounded-xl bg-primary-light text-primary flex items-center justify-center">
             <Phone size={20} />
           </div>
@@ -154,7 +154,7 @@ export default function ContactPage() {
           </a>
         </div>
 
-        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3">
+        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3 reveal-on-scroll stagger-2">
           <div className="w-10 h-10 rounded-xl bg-primary-light text-primary flex items-center justify-center">
             <Mail size={20} />
           </div>
@@ -170,7 +170,7 @@ export default function ContactPage() {
           </a>
         </div>
 
-        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3">
+        <div className="bg-surface rounded-2xl p-6 border border-border shadow-2xs space-y-3 reveal-on-scroll stagger-3">
           <div className="w-10 h-10 rounded-xl bg-primary-light text-primary flex items-center justify-center">
             <Clock size={20} />
           </div>
@@ -185,7 +185,7 @@ export default function ContactPage() {
       </div>
 
       {/* ── 3. Centralized FAQ Accordion ── */}
-      <section className="max-w-3xl mx-auto space-y-6">
+      <section className="max-w-3xl mx-auto space-y-6 reveal-on-scroll">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
             Pertanyaan yang Sering Diajukan (FAQ)
@@ -229,8 +229,8 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ── 4. Contact Form Section ── */}
-      <section className="bg-surface rounded-2xl p-8 sm:p-12 border border-border max-w-3xl mx-auto space-y-6 shadow-2xs">
+      {/* ── 4. Contact Form ── */}
+      <section className="max-w-3xl mx-auto bg-surface rounded-3xl p-6 sm:p-10 border border-border shadow-xs space-y-6 reveal-scale">
         <div className="text-center space-y-1">
           <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">
             Kirim Pesan ke Tim Kami

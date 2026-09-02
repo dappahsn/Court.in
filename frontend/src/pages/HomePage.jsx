@@ -53,7 +53,7 @@ export default function HomePage() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-7">
-          <div className="max-w-2xl space-y-4 text-left">
+          <div className="max-w-2xl space-y-4 text-left reveal-on-scroll">
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tight">
               Booking Lapangan<br />
               Jadi Lebih Mudah
@@ -64,7 +64,7 @@ export default function HomePage() {
           </div>
 
           {/* Interactive Search Card */}
-          <div className="max-w-3xl bg-surface/98 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-border/80 shadow-2xl relative z-30">
+          <div className="max-w-3xl bg-surface/98 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-border/80 shadow-2xl relative z-30 reveal-scale">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -112,7 +112,7 @@ export default function HomePage() {
           </div>
 
           {/* Pilihan Cepat Badges */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs reveal-on-scroll stagger-1">
             <span className="text-white/85 font-medium">Pilihan Cepat:</span>
             {[
               { label: 'Futsal', type: 'FUTSAL' },
@@ -139,11 +139,13 @@ export default function HomePage() {
       {/* ── 2. Three Sport Categories Cards ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CATEGORY_CARDS.map((cat) => (
-            <div
-              key={cat.type}
-              className="relative h-60 sm:h-64 rounded-3xl overflow-hidden shadow-md group flex flex-col justify-end p-6 border border-border/40"
-            >
+          {CATEGORY_CARDS.map((cat, idx) => {
+            const motionClass = idx === 0 ? 'reveal-left stagger-1' : idx === 1 ? 'reveal-on-scroll stagger-2' : 'reveal-right stagger-3'
+            return (
+              <div
+                key={cat.type}
+                className={`relative h-60 sm:h-64 rounded-3xl overflow-hidden shadow-md group flex flex-col justify-end p-6 border border-border/40 ${motionClass}`}
+              >
               <img
                 src={cat.image}
                 alt={cat.title}
@@ -168,14 +170,15 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
       </section>
 
       {/* ── 3. Lapangan Terpopuler ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Section Header */}
-        <div className="text-center space-y-1.5">
+        <div className="text-center space-y-1.5 reveal-on-scroll">
           <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
             Lapangan Terpopuler
           </h2>
@@ -186,11 +189,13 @@ export default function HomePage() {
 
         {/* 4 Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularCourts.map((court) => (
-            <div
-              key={court.id}
-              className="bg-surface rounded-3xl border border-border/80 p-3 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
-            >
+          {popularCourts.map((court, idx) => {
+            const staggerClass = `stagger-${idx + 1}`
+            return (
+              <div
+                key={court.id}
+                className={`bg-surface rounded-3xl border border-border/80 p-3 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group reveal-on-scroll ${staggerClass}`}
+              >
               <div className="space-y-3">
                 {/* Court Image */}
                 <div className="h-44 rounded-2xl overflow-hidden relative">
@@ -232,11 +237,12 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
         {/* Bottom Button */}
-        <div className="text-center pt-2">
+        <div className="text-center pt-2 reveal-on-scroll">
           <Link
             to="/explore"
             className="inline-block px-7 py-3 bg-surface-container-low hover:bg-surface-container border border-border text-text-primary text-xs font-bold rounded-full transition-colors shadow-2xs"
@@ -249,7 +255,7 @@ export default function HomePage() {
       {/* ── 4. Rekomendasi Untukmu (Bento Grid) ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Section Header */}
-        <div className="text-center space-y-1.5">
+        <div className="text-center space-y-1.5 reveal-on-scroll">
           <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
             Rekomendasi Untukmu
           </h2>
@@ -261,7 +267,7 @@ export default function HomePage() {
         {/* Bento Grid: 1 Large Card on Left, 2 Stacked Cards on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Large Card: Lapangan Premium */}
-          <div className="lg:col-span-7 h-[360px] sm:h-[420px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-end p-8 border border-border/40">
+          <div className="lg:col-span-7 h-[360px] sm:h-[420px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-end p-8 border border-border/40 reveal-left">
             <img
               src="/images/premium_court.jpg"
               alt="Lapangan Premium"
@@ -287,7 +293,7 @@ export default function HomePage() {
           {/* Right Stacked Cards: Indoor & Outdoor */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             {/* Top Card: Indoor */}
-            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40">
+            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40 reveal-right stagger-1">
               <img
                 src="/images/indoor_court.jpg"
                 alt="Indoor Courts"
@@ -311,7 +317,7 @@ export default function HomePage() {
             </div>
 
             {/* Bottom Card: Outdoor */}
-            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40">
+            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40 reveal-right stagger-2">
               <img
                 src="/images/outdoor_court.jpg"
                 alt="Outdoor Courts"
@@ -339,7 +345,7 @@ export default function HomePage() {
 
       {/* ── 5. Action Motivational Banner ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative h-60 sm:h-72 rounded-3xl overflow-hidden shadow-lg flex items-center justify-center text-center p-6 border border-border/40 group">
+        <div className="relative h-60 sm:h-72 rounded-3xl overflow-hidden shadow-lg flex items-center justify-center text-center p-6 border border-border/40 group reveal-scale">
           <img
             src="/images/action_banner.jpg"
             alt="Sports Community Action Banner"

@@ -9,6 +9,7 @@ import {
   Check,
   CheckCircle2
 } from 'lucide-react'
+import AnimatedCounter from '../components/AnimatedCounter'
 
 // Core Values Data (Authentic, grounded platform values)
 const CORE_VALUES = [
@@ -183,7 +184,7 @@ export default function AboutPage() {
           ───────────────────────────────────────────────────────────── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-12">
         {/* Header Titles */}
-        <div className="text-center space-y-4 max-w-3xl mx-auto">
+        <div className="text-center space-y-4 max-w-3xl mx-auto reveal-on-scroll">
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-text-primary tracking-tight leading-[1.15]">
             Dedikasi Kami untuk<br />Olahraga Terbaik
           </h1>
@@ -196,7 +197,7 @@ export default function AboutPage() {
         {/* Bento Mosaic Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-stretch">
           {/* Column 1: Tall Vertical Image (Left, md:col-span-4) */}
-          <div className="md:col-span-4 rounded-3xl overflow-hidden shadow-sm border border-border/80 group relative min-h-[380px] md:min-h-[500px]">
+          <div className="md:col-span-4 rounded-3xl overflow-hidden shadow-sm border border-border/80 group relative min-h-[380px] md:min-h-[500px] reveal-left stagger-1">
             <img
               src="/images/about/badminton_hero.jpg"
               alt="Pemain Badminton Smash di Lapangan"
@@ -207,12 +208,12 @@ export default function AboutPage() {
           </div>
 
           {/* Column 2: Center (md:col-span-4) - Brand Primary Blue Stat Card + Futsal Match Photo */}
-          <div className="md:col-span-4 flex flex-col gap-4 sm:gap-6">
+          <div className="md:col-span-4 flex flex-col gap-4 sm:gap-6 reveal-on-scroll stagger-2">
             {/* Brand Primary Blue Stat Card (Court.in Theme) */}
             <div className="bg-gradient-to-br from-[#0058FF] via-[#004EE6] to-[#0038B8] text-white p-7 sm:p-8 rounded-3xl shadow-sm flex flex-col justify-center space-y-1.5 min-h-[160px] sm:min-h-[180px] relative overflow-hidden group">
               <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/15 rounded-full blur-xl group-hover:scale-125 transition-transform" />
               <span className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs">
-                98%
+                <AnimatedCounter target={98} suffix="%" duration={1600} />
               </span>
               <p className="text-xs sm:text-sm font-semibold text-white/95 tracking-wide">
                 Kepuasan Pengguna Kami
@@ -231,7 +232,7 @@ export default function AboutPage() {
           </div>
 
           {/* Column 3: Right (md:col-span-4) - Padel Tennis Action + Dark Stat Card */}
-          <div className="md:col-span-4 flex flex-col gap-4 sm:gap-6">
+          <div className="md:col-span-4 flex flex-col gap-4 sm:gap-6 reveal-right stagger-3">
             {/* Top Photo - Padel Action */}
             <div className="flex-1 rounded-3xl overflow-hidden shadow-sm border border-border/80 group min-h-[220px] sm:min-h-[290px]">
               <img
@@ -246,7 +247,7 @@ export default function AboutPage() {
             <div className="bg-[#0B132B] text-white p-7 sm:p-8 rounded-3xl shadow-sm flex flex-col justify-center space-y-1.5 min-h-[160px] sm:min-h-[180px] border border-slate-800 relative overflow-hidden group">
               <div className="absolute -right-6 -top-6 w-28 h-28 bg-primary/20 rounded-full blur-xl group-hover:scale-125 transition-transform" />
               <span className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs">
-                10K+
+                <AnimatedCounter target={10} suffix="K+" duration={1600} />
               </span>
               <p className="text-xs sm:text-sm font-semibold text-slate-300 tracking-wide">
                 Komunitas Pemain Aktif
@@ -266,12 +267,12 @@ export default function AboutPage() {
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Top 2-Column Statement */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 reveal-left">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary leading-[1.25] tracking-tight">
               Menyediakan Fasilitas Olahraga Terbaik untuk Semua
             </h2>
           </div>
-          <div className="lg:col-span-7 space-y-4 text-sm sm:text-base text-text-secondary leading-relaxed">
+          <div className="lg:col-span-7 space-y-4 text-sm sm:text-base text-text-secondary leading-relaxed reveal-right">
             <p>
               Bagi kami, olahraga bukan sekadar aktivitas fisik, melainkan ruang untuk menjalin kebersamaan, menjaga kesehatan jasmani, dan menyalurkan semangat sportivitas. Namun, para pecinta olahraga sering kali menghadapi tantangan klasik: sulitnya mencari jadwal lapangan yang cocok, proses reservasi manual via chat yang memakan waktu, hingga kepastian fasilitas di lokasi.
             </p>
@@ -281,35 +282,35 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* 4 Key Metrics Row */}
+        {/* 4 Key Metrics Row with Counting Animation */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 pt-8 border-t border-border">
-          <div className="space-y-1">
-            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight">
-              90K+
+          <div className="space-y-1 reveal-on-scroll stagger-1">
+            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight block">
+              <AnimatedCounter target={90} suffix="K+" duration={1800} />
             </span>
             <p className="text-xs sm:text-sm text-text-secondary font-medium">
               Pengguna Terdaftar
             </p>
           </div>
-          <div className="space-y-1">
-            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight">
-              85%
+          <div className="space-y-1 reveal-on-scroll stagger-2">
+            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight block">
+              <AnimatedCounter target={85} suffix="%" duration={1800} />
             </span>
             <p className="text-xs sm:text-sm text-text-secondary font-medium">
               Peningkatan Okupansi Venue
             </p>
           </div>
-          <div className="space-y-1">
-            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight">
-              77%
+          <div className="space-y-1 reveal-on-scroll stagger-3">
+            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight block">
+              <AnimatedCounter target={77} suffix="%" duration={1800} />
             </span>
             <p className="text-xs sm:text-sm text-text-secondary font-medium">
               Efisiensi Waktu Booking
             </p>
           </div>
-          <div className="space-y-1">
-            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight">
-              5k+
+          <div className="space-y-1 reveal-on-scroll stagger-4">
+            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary tracking-tight block">
+              <AnimatedCounter target={5} suffix="k+" duration={1800} />
             </span>
             <p className="text-xs sm:text-sm text-text-secondary font-medium">
               Pertandingan per Bulan
@@ -327,7 +328,7 @@ export default function AboutPage() {
           ───────────────────────────────────────────────────────────── */}
       <section className="bg-[#F6F8FC] py-16 sm:py-20 border-y border-border/60">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <div className="text-center space-y-2 max-w-2xl mx-auto reveal-on-scroll">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
               Nilai - Nilai Inti Kami
             </h2>
@@ -339,8 +340,9 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {CORE_VALUES.map((item, index) => {
               const IconComp = item.icon
+              const staggerClass = `stagger-${index + 1}`
               return (
-                <div key={index} className="space-y-2.5">
+                <div key={index} className={`space-y-2.5 reveal-on-scroll ${staggerClass}`}>
                   <div className="flex items-center gap-2">
                     <IconComp size={18} className="text-primary shrink-0" strokeWidth={2.2} />
                     <h3 className="font-bold text-sm sm:text-base text-text-primary tracking-tight">
@@ -365,7 +367,7 @@ export default function AboutPage() {
           - Soft gradient edge fades & pause on hover
           ───────────────────────────────────────────────────────────── */}
       <section className="w-full py-6 sm:py-10 space-y-6 overflow-hidden">
-        <div className="text-center space-y-2 max-w-2xl mx-auto px-4">
+        <div className="text-center space-y-2 max-w-2xl mx-auto px-4 reveal-on-scroll">
           <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
             Didukung oleh Investor Terkemuka
           </h2>
@@ -375,7 +377,7 @@ export default function AboutPage() {
         </div>
 
         {/* Continuous Marquee Ticker Track */}
-        <div className="relative w-full overflow-hidden py-3">
+        <div className="relative w-full overflow-hidden py-3 reveal-scale">
           {/* Left Gradient Edge Fade */}
           <div className="pointer-events-none absolute inset-y-0 left-0 w-20 sm:w-36 bg-gradient-to-r from-bg-app via-bg-app/80 to-transparent z-10" />
 
@@ -427,7 +429,7 @@ export default function AboutPage() {
           - 4 smaller member cards in a horizontal row
           ───────────────────────────────────────────────────────────── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="text-center space-y-2 max-w-xl mx-auto">
+        <div className="text-center space-y-2 max-w-xl mx-auto reveal-on-scroll">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
             Tim Kami
           </h2>
@@ -437,26 +439,29 @@ export default function AboutPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-          {TEAM_MEMBERS.map((member, idx) => (
-            <div key={idx} className="space-y-2.5 text-left group">
-              <div className="aspect-[4/5] rounded-xl overflow-hidden bg-slate-100 border border-border/80 shadow-2xs">
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-full object-cover grayscale contrast-105 group-hover:grayscale-0 transition-all duration-300"
-                  loading="lazy"
-                />
+          {TEAM_MEMBERS.map((member, idx) => {
+            const staggerClass = `stagger-${idx + 1}`
+            return (
+              <div key={idx} className={`space-y-2.5 text-left group reveal-on-scroll ${staggerClass}`}>
+                <div className="aspect-[4/5] rounded-xl overflow-hidden bg-slate-100 border border-border/80 shadow-2xs">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover grayscale contrast-105 group-hover:grayscale-0 transition-all duration-300"
+                    loading="lazy"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-text-primary">
+                    {member.name}
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-text-muted">
+                    {member.role}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-xs sm:text-sm text-text-primary">
-                  {member.name}
-                </h4>
-                <p className="text-[11px] sm:text-xs text-text-muted">
-                  {member.role}
-                </p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 
@@ -472,7 +477,7 @@ export default function AboutPage() {
       <section className="bg-[#FAF7F2] py-16 sm:py-20 border-y border-[#EFE9DD]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Header */}
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <div className="text-center space-y-2 max-w-2xl mx-auto reveal-on-scroll">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
               Lokasi Lapangan Kami
             </h2>
@@ -481,7 +486,7 @@ export default function AboutPage() {
             </p>
           </div>
           {/* Single Featured Location Card */}
-          <div className="max-w-3xl mx-auto bg-white rounded-3xl overflow-hidden border border-[#E9E3D5] shadow-xs hover:shadow-md transition-all duration-300 group">
+          <div className="max-w-3xl mx-auto bg-white rounded-3xl overflow-hidden border border-[#E9E3D5] shadow-xs hover:shadow-md transition-all duration-300 group reveal-scale">
             <div className="aspect-[16/9] sm:aspect-[21/9] overflow-hidden relative">
               <img
                 src={FEATURED_LOCATION.image}
@@ -547,10 +552,10 @@ export default function AboutPage() {
           - Right: Wireframe / Mockup preview of booking UI
           ───────────────────────────────────────────────────────────── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#F2F5FB] rounded-3xl p-6 sm:p-10 lg:p-12 border border-border/80 shadow-xs">
+        <div className="bg-[#F2F5FB] rounded-3xl p-6 sm:p-10 lg:p-12 border border-border/80 shadow-xs reveal-on-scroll">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
-            <div className="lg:col-span-6 space-y-4">
+            <div className="lg:col-span-6 space-y-4 reveal-left">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight leading-tight">
                 Mulai Main Hari Ini.
               </h2>
@@ -575,7 +580,7 @@ export default function AboutPage() {
             </div>
 
             {/* Right Mockup UI (Interactive preview of Court.in Booking Card) */}
-            <div className="lg:col-span-6">
+            <div className="lg:col-span-6 reveal-right stagger-1">
               <div className="bg-white rounded-2xl p-5 sm:p-6 border border-border shadow-xs space-y-4">
                 {/* Mock Card Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-border/60">

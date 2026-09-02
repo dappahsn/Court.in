@@ -83,7 +83,7 @@ export default function ExplorePage() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
       {/* Header breadcrumb & title */}
-      <div className="mb-8">
+      <div className="mb-8 reveal-on-scroll">
         <div className="flex items-center gap-2 text-xs text-text-muted mb-2">
           <Link to="/" className="hover:text-primary transition-colors">Beranda</Link>
           <span>/</span>
@@ -117,7 +117,7 @@ export default function ExplorePage() {
       {/* Main layout: Sidebar Filter + Results Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         {/* ── Left: Filter Sidebar (Desktop) ── */}
-        <aside className="hidden lg:block lg:col-span-1 space-y-6">
+        <aside className="hidden lg:block lg:col-span-1 space-y-6 reveal-left">
           <div className="bg-surface rounded-2xl p-5 border border-border sticky top-24 shadow-2xs space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-2">
@@ -267,7 +267,7 @@ export default function ExplorePage() {
         {/* ── Right: Search Bar, Sorting & Court Grid ── */}
         <main className="lg:col-span-3 space-y-6">
           {/* Search Bar & Custom Sort Dropdown */}
-          <div className="bg-surface rounded-2xl p-4 border border-border shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-surface rounded-2xl p-4 border border-border shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4 reveal-on-scroll">
             {/* Search Input */}
             <div className="relative w-full sm:flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
@@ -368,13 +368,14 @@ export default function ExplorePage() {
           {/* Results Court Grid */}
           {filteredCourts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredCourts.map((court) => {
+              {filteredCourts.map((court, idx) => {
                 const availableCount = court.time_slots.filter((s) => s.available).length
+                const staggerClass = `stagger-${(idx % 6) + 1}`
 
                 return (
                   <div
                     key={court.id}
-                    className="bg-surface rounded-2xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-200 flex flex-col justify-between group"
+                    className={`bg-surface rounded-2xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 flex flex-col justify-between group reveal-on-scroll ${staggerClass}`}
                   >
                     <div>
                       {/* Image + Environment & Rating */}
