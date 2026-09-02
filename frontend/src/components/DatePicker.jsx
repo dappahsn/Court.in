@@ -146,7 +146,7 @@ export default function DatePicker({ value, onChange, minDate }) {
 
       {/* ── 2. Popover Calendar Modal Card ── */}
       {isOpen && (
-        <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-3 w-[320px] sm:w-[340px] bg-surface rounded-2xl border border-border shadow-2xl p-4 z-50 animate-slide-in">
+        <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-3 w-[320px] sm:w-[340px] bg-surface rounded-2xl border border-border shadow-2xl p-4 z-[100] animate-slide-in">
           {/* Quick Presets Bar */}
           <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
             <button

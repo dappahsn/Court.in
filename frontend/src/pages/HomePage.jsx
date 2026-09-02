@@ -40,9 +40,9 @@ export default function HomePage() {
   return (
     <div className="space-y-16 sm:space-y-24 pb-20">
       {/* ── 1. Hero Section With Interactive Search Card ── */}
-      <section className="relative w-full overflow-hidden pt-12 sm:pt-16 pb-16 sm:pb-24">
+      <section className="relative w-full pt-12 sm:pt-16 pb-24 sm:pb-36 z-20">
         {/* Background Image & Blue Gradient Overlay */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <img
             src="/images/hero_sky.jpg"
             alt="Sports Stadium"
@@ -64,7 +64,7 @@ export default function HomePage() {
           </div>
 
           {/* Interactive Search Card */}
-          <div className="max-w-3xl bg-surface/98 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-border/80 shadow-2xl">
+          <div className="max-w-3xl bg-surface/98 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-border/80 shadow-2xl relative z-30">
             <form
               onSubmit={(e) => {
                 e.preventDefault()

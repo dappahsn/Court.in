@@ -118,7 +118,7 @@ export default function SportPicker({ value = '', onChange, className = '' }) {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute left-0 right-0 sm:left-0 sm:w-[320px] top-full mt-2 bg-surface rounded-2xl border border-border shadow-2xl p-2 z-50 animate-slide-in backdrop-blur-md">
+        <div className="absolute left-0 right-0 sm:left-0 sm:w-[320px] top-full mt-2 bg-surface rounded-2xl border border-border shadow-2xl p-2 z-[100] animate-slide-in backdrop-blur-md">
           <div className="px-3 py-2 border-b border-border/60">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
               Pilih Cabang Olahraga
