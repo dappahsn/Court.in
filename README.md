@@ -285,17 +285,6 @@ Buka peramban Anda di:
 
 ---
 
-## 🔑 Kredensial Akun Default (Seed Data)
-
-Untuk menguji fitur tanpa harus mendaftar dari awal, gunakan akun demo berikut:
-
-| Peran (Role) | Email | Password | Hak Akses |
-| :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin@court.in` | `admin123` | Akses penuh Dashboard Admin, jadwal slot, moderasi ulasan, dan staf |
-| **Staf Kasir** | `siti.kasir@court.in` | `admin123` | Check-in pelanggan, input booking bayar di tempat (cash) |
-| **Pelanggan Demo** | `daffa@court.in` | `user123` | Eksplorasi lapangan, reservasi slot, riwayat tiket, submit ulasan |
-
----
 
 ## 🔒 Aturan Bisnis & Keamanan Transaksi
 
