@@ -6,8 +6,9 @@ import Logo from './Logo'
 
 const navLinks = [
   { to: '/', label: 'Beranda' },
-  { to: '/explore', label: 'Lapangan' },
-  { to: '/explore?promo=true', label: 'Promo' },
+  { to: '/explore', label: 'Jelajah Lapangan' },
+  { to: '/about', label: 'Tentang Kami' },
+  { to: '/contact', label: 'Hubungi Kami' },
 ]
 
 export default function Header() {
@@ -51,16 +52,16 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `transition-colors ${
-                    isActive && link.to === '/'
-                      ? 'text-text-primary font-bold'
-                      : 'text-text-secondary hover:text-text-primary'
+                  `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-primary-light text-primary font-bold'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-container-low'
                   }`
                 }
               >
