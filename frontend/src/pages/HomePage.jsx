@@ -1,339 +1,293 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Star, ShieldCheck, Zap, CreditCard, ArrowRight } from 'lucide-react'
 import useCourtStore from '../stores/courtStore'
-import SportIcon from '../components/SportIcon'
-import DatePicker from '../components/DatePicker'
-import SportPicker from '../components/SportPicker'
 
-const CATEGORIES = [
+const CATEGORY_CARDS = [
   {
     type: 'FUTSAL',
-    label: 'Futsal',
+    title: 'Futsal',
+    desc: 'Lapangan Futsal sintetis dan vinyl',
     image: '/images/futsal.jpg',
-    courts: '12 Lapangan Mitra',
-  },
-  {
-    type: 'BADMINTON',
-    label: 'Badminton',
-    image: '/images/badminton.jpg',
-    courts: '18 Lapangan Mitra',
+    link: '/explore?type=FUTSAL',
   },
   {
     type: 'PADEL',
-    label: 'Padel',
+    title: 'Padel',
+    desc: 'Lapangan padel indoor dan outdoor',
     image: '/images/padel.jpg',
-    courts: '8 Lapangan Mitra',
+    link: '/explore?type=PADEL',
+  },
+  {
+    type: 'BADMINTON',
+    title: 'Badminton',
+    desc: 'Lapangan karpet standar BWF.',
+    image: '/images/badminton.jpg',
+    link: '/explore?type=BADMINTON',
   },
 ]
 
 export default function HomePage() {
   const { courts } = useCourtStore()
-  const [selectedSport, setSelectedSport] = useState('')
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-
-  const featuredCourts = courts.slice(0, 4)
+  const popularCourts = courts.slice(0, 4)
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20">
-      {/* ── 1. Hero Section (Minimalist, Spacious & Elegant) ── */}
-      <section className="relative pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-border bg-gradient-to-b from-surface via-surface-container-low/40 to-bg-app">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center space-y-5 mb-10">
-            {/* Typography */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight leading-[1.15]">
-              Pesan Lapangan Olahraga <br className="hidden sm:inline" />
-              <span className="text-primary">Lebih Praktis & Pasti</span>
+      {/* ── 1. Hero Section ── */}
+      <section className="relative w-full h-[460px] sm:h-[520px] lg:h-[580px] overflow-hidden flex items-center">
+        {/* Background Image & Blue Gradient Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/hero_sky.jpg"
+            alt="Sports Stadium"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/85 via-blue-900/65 to-sky-900/40" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="max-w-2xl space-y-4 sm:space-y-5 text-left">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tight">
+              Booking Lapangan<br />
+              Jadi Lebih Mudah
             </h1>
-
-            <p className="text-base sm:text-lg text-text-secondary max-w-xl mx-auto leading-relaxed">
-              Jadwal real-time, pilih jam bermain, dan konfirmasi instan via QRIS atau bayar langsung di lokasi tanpa risiko dobel booking.
+            <p className="text-xs sm:text-sm lg:text-base text-slate-100/90 max-w-lg leading-relaxed font-normal">
+              Temukan dan pesan lapangan olahraga terbaik di sekitarmu dengan cepat dan aman.
             </p>
-          </div>
-
-          {/* Search Card (Floating, Minimalist & Focused) */}
-          <div className="max-w-3xl mx-auto bg-surface rounded-2xl p-3 sm:p-4 border border-border shadow-xl shadow-slate-200/50">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                window.location.href = `/explore?type=${selectedSport}&date=${selectedDate}`
-              }}
-              className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
-            >
-              {/* Custom Bespoke Sport Picker */}
-              <div className="sm:col-span-5 p-2 rounded-xl hover:bg-surface-container-low transition-colors">
-                <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">
-                  Cabang Olahraga
-                </label>
-                <SportPicker
-                  value={selectedSport}
-                  onChange={setSelectedSport}
-                />
-              </div>
-
-              {/* Divider on Desktop */}
-              <div className="hidden sm:block w-px h-10 bg-border" />
-
-              {/* Bespoke Interactive Date Picker */}
-              <div className="sm:col-span-4 p-2 rounded-xl hover:bg-surface-container-low transition-colors">
-                <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">
-                  Tanggal Main
-                </label>
-                <DatePicker
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                  minDate={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-
-              {/* Submit CTA */}
-              <div className="sm:col-span-2 sm:ml-auto w-full">
-                <button
-                  type="submit"
-                  className="w-full h-12 flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-semibold rounded-xl shadow-sm hover:shadow transition-all text-sm cursor-pointer"
-                >
-                  <Search size={16} />
-                  <span>Cari</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Quick Filter Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-            <span className="text-xs text-text-muted font-medium">Pilihan Cepat:</span>
-            {['FUTSAL', 'BADMINTON', 'PADEL'].map((sport) => (
-              <button
-                key={sport}
-                type="button"
-                onClick={() => setSelectedSport(selectedSport === sport ? '' : sport)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  selectedSport === sport
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'bg-surface border border-border text-text-secondary hover:border-text-muted hover:text-text-primary'
-                }`}
+            <div className="pt-2">
+              <Link
+                to="/explore"
+                className="inline-block px-7 py-3 sm:px-8 sm:py-3.5 bg-white text-slate-900 font-bold text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all"
               >
-                <SportIcon type={sport} className="w-3.5 h-3.5" />
-                <span>{sport === 'FUTSAL' ? 'Futsal' : sport === 'BADMINTON' ? 'Badminton' : 'Padel'}</span>
-              </button>
-            ))}
+                Cari Lapangan
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── 2. Kategori Olahraga Grid ── */}
+      {/* ── 2. Three Sport Categories Cards ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-widest block mb-1">
-              Kategori
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              Pilihan Cabang Olahraga
-            </h2>
-          </div>
-          <Link
-            to="/explore"
-            className="text-sm font-semibold text-primary hover:text-primary-container flex items-center gap-1 transition-colors group"
-          >
-            Lihat Semua <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {CATEGORIES.map((cat) => (
-            <Link
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {CATEGORY_CARDS.map((cat) => (
+            <div
               key={cat.type}
-              to={`/explore?type=${cat.type}`}
-              className="group relative rounded-2xl overflow-hidden border border-border hover:border-primary/50 shadow-xs hover:shadow-xl transition-all duration-300 h-44 sm:h-48 flex flex-col justify-end p-6 bg-surface-container"
+              className="relative h-60 sm:h-64 rounded-3xl overflow-hidden shadow-md group flex flex-col justify-end p-6 border border-border/40"
             >
-              {/* Background Clean Photo */}
               <img
                 src={cat.image}
-                alt={cat.label}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                alt={cat.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              {/* Soft Dark Vignette */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
 
-              <div className="relative z-10 flex items-center justify-between text-white">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
-                    <SportIcon type={cat.type} className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-white">
-                      {cat.label}
-                    </h3>
-                    <p className="text-xs text-white/75">{cat.courts}</p>
-                  </div>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-white group-hover:text-primary transition-colors">
-                  <ArrowRight size={16} />
+              <div className="relative z-10 space-y-2 text-left">
+                <h3 className="text-xl font-black text-white tracking-wide">
+                  {cat.title}
+                </h3>
+                <p className="text-xs text-slate-200/90 leading-relaxed font-normal">
+                  {cat.desc}
+                </p>
+                <div className="pt-1">
+                  <Link
+                    to={cat.link}
+                    className="inline-block px-5 py-2 bg-white text-slate-900 font-bold text-xs rounded-full shadow-sm hover:bg-slate-100 transition-colors"
+                  >
+                    Lihat Lapangan
+                  </Link>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* ── 3. Rekomendasi Lapangan Unggulan (Grid 4 Kolom) ── */}
-      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-widest block mb-1">
-              Rekomendasi
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              Lapangan Favorit & Terpopuler
-            </h2>
-          </div>
-          <Link
-            to="/explore"
-            className="text-sm font-semibold text-primary hover:text-primary-container flex items-center gap-1 transition-colors group"
-          >
-            Lihat Semua <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+      {/* ── 3. Lapangan Terpopuler ── */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Section Header */}
+        <div className="text-center space-y-1.5">
+          <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+            Lapangan Terpopuler
+          </h2>
+          <p className="text-xs sm:text-sm text-text-muted">
+            Pilihan terbaik berdasarkan ulasan pengguna kami
+          </p>
         </div>
 
+        {/* 4 Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredCourts.map((court) => (
-            <Link
+          {popularCourts.map((court) => (
+            <div
               key={court.id}
-              to={`/courts/${court.id}`}
-              className="group bg-surface rounded-2xl border border-border hover:border-primary/40 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden"
+              className="bg-surface rounded-3xl border border-border/80 p-3 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
             >
-              {/* Photo */}
-              <div className="relative aspect-[4/3] bg-surface-container overflow-hidden">
-                <img
-                  src={court.image_url}
-                  alt={court.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 flex gap-1.5">
-                  <span className="bg-surface/90 backdrop-blur-xs text-text-primary text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs">
-                    {court.environment}
-                  </span>
-                  <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs inline-flex items-center gap-1">
-                    <SportIcon type={court.type} className="w-3 h-3" />
-                    <span>{court.type}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-4 flex flex-col flex-1 justify-between space-y-3">
-                <div>
-                  <div className="flex items-center justify-between text-xs text-text-muted mb-1">
-                    <span>{court.location}</span>
-                    <div className="flex items-center gap-1 font-bold text-text-primary">
-                      <Star size={12} className="text-star-filled fill-star-filled" />
-                      <span>{court.rating}</span>
-                      <span className="text-text-muted font-normal">({court.reviews_count})</span>
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-sm text-text-primary group-hover:text-primary transition-colors line-clamp-1">
-                    {court.name}
-                  </h3>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    {court.surface}
-                  </p>
+              <div className="space-y-3">
+                {/* Court Image */}
+                <div className="h-44 rounded-2xl overflow-hidden relative">
+                  <img
+                    src={court.image_url}
+                    alt={court.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 </div>
 
-                <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-text-muted block">Mulai dari</span>
-                    <span className="text-sm font-extrabold text-text-primary">
-                      Rp{court.price_per_hour.toLocaleString('id-ID')}
-                      <span className="text-[10px] font-normal text-text-muted">/jam</span>
+                {/* Court Info */}
+                <div className="px-1 space-y-1 text-left">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-bold text-sm text-text-primary truncate">
+                      {court.name}
+                    </h3>
+                    <span className="text-[10px] font-semibold text-text-muted bg-surface-container-low px-2 py-0.5 rounded-md shrink-0 border border-border/60">
+                      {court.type}
                     </span>
                   </div>
-                  <span className="text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
-                    Detail <ArrowRight size={13} />
-                  </span>
+
+                  <p className="text-xs text-text-muted">
+                    {court.location || 'Indonesia'}
+                  </p>
+
+                  <p className="text-xs font-black text-text-primary pt-1">
+                    Rp {court.price_per_hour.toLocaleString('id-ID')}<span className="font-normal text-text-muted text-[11px]">/jam</span>
+                  </p>
                 </div>
               </div>
-            </Link>
+
+              {/* Action Button */}
+              <div className="pt-3 px-1">
+                <Link
+                  to={`/courts/${court.id}`}
+                  className="block w-full py-2.5 bg-surface-container-low hover:bg-surface-container text-text-primary text-xs font-bold rounded-xl border border-border/80 transition-colors text-center shadow-2xs"
+                >
+                  Detail
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
+
+        {/* Bottom Button */}
+        <div className="text-center pt-2">
+          <Link
+            to="/explore"
+            className="inline-block px-7 py-3 bg-surface-container-low hover:bg-surface-container border border-border text-text-primary text-xs font-bold rounded-full transition-colors shadow-2xs"
+          >
+            Lihat Semua Lapangan
+          </Link>
+        </div>
       </section>
 
-      {/* ── 4. Value Propositions (3 Pilar Utama) ── */}
-      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-surface rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-border shadow-xs">
-          <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest">
-              Kenapa Memilih court.in?
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary">
-              Standar Terbaik Booking Lapangan Olahraga
-            </h2>
+      {/* ── 4. Rekomendasi Untukmu (Bento Grid) ── */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Section Header */}
+        <div className="text-center space-y-1.5">
+          <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+            Rekomendasi Untukmu
+          </h2>
+          <p className="text-xs sm:text-sm text-text-muted">
+            Pilihan lapangan berdasarkan aktivitasmu.
+          </p>
+        </div>
+
+        {/* Bento Grid: 1 Large Card on Left, 2 Stacked Cards on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Large Card: Lapangan Premium */}
+          <div className="lg:col-span-7 h-[360px] sm:h-[420px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-end p-8 border border-border/40">
+            <img
+              src="/images/premium_court.jpg"
+              alt="Lapangan Premium"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+
+            <div className="relative z-10 space-y-3 text-left">
+              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Lapangan Premium
+              </h3>
+              <div>
+                <Link
+                  to="/explore"
+                  className="inline-block px-6 py-2.5 bg-white text-slate-900 font-bold text-xs rounded-full shadow-sm hover:bg-slate-100 transition-colors"
+                >
+                  Lihat Semua
+                </Link>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex gap-4 items-start">
-              <div className="w-11 h-11 rounded-2xl bg-primary-light text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                <Zap size={20} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-bold text-base text-text-primary">Jadwal Real-Time</h3>
-                <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-                  Slot jam yang Anda lihat selalu akurat secara langsung dari sistem komputer masing-masing venue.
-                </p>
+          {/* Right Stacked Cards: Indoor & Outdoor */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            {/* Top Card: Indoor */}
+            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40">
+              <img
+                src="/images/indoor_court.jpg"
+                alt="Indoor Courts"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
+
+              <div className="relative z-10 space-y-2 text-left">
+                <h3 className="text-xl font-black text-white tracking-wide">
+                  Indoor
+                </h3>
+                <div>
+                  <Link
+                    to="/explore?env=Indoor"
+                    className="inline-block px-5 py-2 bg-white text-slate-900 font-bold text-xs rounded-full shadow-sm hover:bg-slate-100 transition-colors"
+                  >
+                    Lihat Semua
+                  </Link>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-4 items-start">
-              <div className="w-11 h-11 rounded-2xl bg-primary-light text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                <ShieldCheck size={20} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-bold text-base text-text-primary">Bebas Dobel Booking</h3>
-                <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-                  Slot otomatis dikunci saat Anda melakukan proses checkout sehingga tidak akan diambil pengguna lain.
-                </p>
-              </div>
-            </div>
+            {/* Bottom Card: Outdoor */}
+            <div className="h-[170px] sm:h-[198px] rounded-3xl overflow-hidden relative shadow-md group flex flex-col justify-start p-6 border border-border/40">
+              <img
+                src="/images/outdoor_court.jpg"
+                alt="Outdoor Courts"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
 
-            <div className="flex gap-4 items-start">
-              <div className="w-11 h-11 rounded-2xl bg-primary-light text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                <CreditCard size={20} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-bold text-base text-text-primary">Bayar Fleksibel</h3>
-                <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-                  Pilihan pembayaran instan QRIS (GoPay, OVO, Dana, M-Banking) atau bayar langsung di tempat saat bermain.
-                </p>
+              <div className="relative z-10 space-y-2 text-left">
+                <h3 className="text-xl font-black text-white tracking-wide">
+                  Outdoor
+                </h3>
+                <div>
+                  <Link
+                    to="/explore?env=Outdoor"
+                    className="inline-block px-5 py-2 bg-white text-slate-900 font-bold text-xs rounded-full shadow-sm hover:bg-slate-100 transition-colors"
+                  >
+                    Lihat Semua
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 5. Clean Minimalist CTA Section ── */}
+      {/* ── 5. Action Motivational Banner ── */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl bg-surface border border-border p-8 sm:p-12 text-center space-y-6 shadow-xs">
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-              Siap Bertanding Hari Ini?
+        <div className="relative h-60 sm:h-72 rounded-3xl overflow-hidden shadow-lg flex items-center justify-center text-center p-6 border border-border/40 group">
+          <img
+            src="/images/action_banner.jpg"
+            alt="Sports Community Action Banner"
+            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/60 to-black/40" />
+
+          <div className="relative z-10 space-y-4 max-w-xl mx-auto">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">
+              Mulai Aktivitas Sehatmu Hari Ini.
             </h2>
-            <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
-              Jelajahi puluhan pilihan lapangan futsal, badminton, dan padel terbaik di dekat Anda. Booking mudah hanya dalam hitungan detik.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/explore"
-              className="px-6 py-3.5 bg-primary hover:bg-primary-container text-white font-semibold rounded-xl text-sm shadow-xs transition-all"
-            >
-              Cari Lapangan Sekarang
-            </Link>
-            <Link
-              to="/contact"
-              className="px-6 py-3.5 bg-surface-container-low hover:bg-surface-container text-text-primary font-semibold rounded-xl text-sm transition-all border border-border"
-            >
-              Hubungi Bantuan
-            </Link>
+            <div>
+              <Link
+                to="/register"
+                className="inline-block px-8 py-3.5 bg-white text-slate-900 font-bold text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all"
+              >
+                Daftar Sekarang
+              </Link>
+            </div>
           </div>
         </div>
       </section>

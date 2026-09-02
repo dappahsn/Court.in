@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { User, Menu, X, LogOut, Calendar, ShieldCheck } from 'lucide-react'
+import { User, Menu, X, LogOut, Calendar, ShieldCheck, Search } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 import Logo from './Logo'
 
 const navLinks = [
   { to: '/', label: 'Beranda' },
-  { to: '/explore', label: 'Jelajah Lapangan' },
-  { to: '/about', label: 'Tentang Kami' },
-  { to: '/contact', label: 'Hubungi Kami' },
+  { to: '/explore', label: 'Lapangan' },
+  { to: '/explore?promo=true', label: 'Promo' },
 ]
 
 export default function Header() {
@@ -43,7 +42,7 @@ export default function Header() {
   const avatarImg = user?.avatar_url || (user?.email ? localStorage.getItem('courtin_avatar_' + user.email.toLowerCase()) : null)
 
   return (
-    <header className="bg-surface/90 backdrop-blur-md border-b border-border sticky top-0 z-50 transition-all">
+    <header className="bg-surface/95 backdrop-blur-md border-b border-border/80 sticky top-0 z-50 transition-all">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Brand Logo */}
@@ -52,16 +51,16 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    isActive
-                      ? 'bg-primary-light text-primary font-bold'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-container-low'
+                  `transition-colors ${
+                    isActive && link.to === '/'
+                      ? 'text-text-primary font-bold'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`
                 }
               >
@@ -70,8 +69,15 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* User Auth Controls & Mobile Menu Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Right Action Icons: Search & Profile */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/explore"
+              className="p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-container-low transition-colors"
+              aria-label="Cari Lapangan"
+            >
+              <Search size={19} />
+            </Link>
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -151,20 +157,13 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-2.5">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-container-low transition-all"
-                >
-                  Masuk
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-primary hover:bg-primary-container text-white shadow-sm hover:shadow transition-all"
-                >
-                  Daftar
-                </Link>
-              </div>
+              <Link
+                to="/login"
+                className="p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-container-low transition-colors"
+                aria-label="Akun & Masuk"
+              >
+                <User size={20} />
+              </Link>
             )}
 
             {/* Mobile Hamburger Button */}
