@@ -1,5 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import useCourtStore from '../stores/courtStore'
+import SportPicker from '../components/SportPicker'
+import DatePicker from '../components/DatePicker'
+import SportIcon from '../components/SportIcon'
 
 const CATEGORY_CARDS = [
   {
@@ -27,12 +32,15 @@ const CATEGORY_CARDS = [
 
 export default function HomePage() {
   const { courts } = useCourtStore()
+  const [selectedSport, setSelectedSport] = useState('')
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+
   const popularCourts = courts.slice(0, 4)
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20">
-      {/* ── 1. Hero Section ── */}
-      <section className="relative w-full h-[460px] sm:h-[520px] lg:h-[580px] overflow-hidden flex items-center">
+      {/* ── 1. Hero Section With Interactive Search Card ── */}
+      <section className="relative w-full overflow-hidden pt-12 sm:pt-16 pb-16 sm:pb-24">
         {/* Background Image & Blue Gradient Overlay */}
         <div className="absolute inset-0 z-0">
           <img
@@ -40,12 +48,12 @@ export default function HomePage() {
             alt="Sports Stadium"
             className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/85 via-blue-900/65 to-sky-900/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-blue-900/75 to-sky-900/50" />
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="max-w-2xl space-y-4 sm:space-y-5 text-left">
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-7">
+          <div className="max-w-2xl space-y-4 text-left">
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tight">
               Booking Lapangan<br />
               Jadi Lebih Mudah
@@ -53,14 +61,77 @@ export default function HomePage() {
             <p className="text-xs sm:text-sm lg:text-base text-slate-100/90 max-w-lg leading-relaxed font-normal">
               Temukan dan pesan lapangan olahraga terbaik di sekitarmu dengan cepat dan aman.
             </p>
-            <div className="pt-2">
-              <Link
-                to="/explore"
-                className="inline-block px-7 py-3 sm:px-8 sm:py-3.5 bg-white text-slate-900 font-bold text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all"
+          </div>
+
+          {/* Interactive Search Card */}
+          <div className="max-w-3xl bg-surface/98 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-border/80 shadow-2xl">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                window.location.href = `/explore?type=${selectedSport}&date=${selectedDate}`
+              }}
+              className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+            >
+              {/* Sport Picker */}
+              <div className="sm:col-span-5 p-2 rounded-2xl hover:bg-surface-container-low transition-colors">
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Cabang Olahraga
+                </label>
+                <SportPicker
+                  value={selectedSport}
+                  onChange={setSelectedSport}
+                />
+              </div>
+
+              {/* Divider on Desktop */}
+              <div className="hidden sm:block w-px h-10 bg-border" />
+
+              {/* Date Picker */}
+              <div className="sm:col-span-4 p-2 rounded-2xl hover:bg-surface-container-low transition-colors">
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Tanggal Main
+                </label>
+                <DatePicker
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  minDate={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+
+              {/* Submit CTA */}
+              <div className="sm:col-span-2 sm:ml-auto w-full">
+                <button
+                  type="submit"
+                  className="w-full h-12 flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold rounded-2xl shadow-sm hover:shadow transition-all text-sm cursor-pointer"
+                >
+                  <Search size={17} />
+                  <span>Cari</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Pilihan Cepat Badges */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-white/85 font-medium">Pilihan Cepat:</span>
+            {[
+              { label: 'Futsal', type: 'FUTSAL' },
+              { label: 'Badminton', type: 'BADMINTON' },
+              { label: 'Padel', type: 'PADEL' },
+            ].map((s) => (
+              <button
+                key={s.type}
+                type="button"
+                onClick={() => {
+                  setSelectedSport(s.type)
+                  window.location.href = `/explore?type=${s.type}`
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 hover:bg-white text-slate-800 font-semibold shadow-xs hover:shadow transition-all cursor-pointer text-xs"
               >
-                Cari Lapangan
-              </Link>
-            </div>
+                <SportIcon type={s.type} className="w-3.5 h-3.5 text-primary" />
+                <span>{s.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
