@@ -1,8 +1,12 @@
 <div align="center">
 
-# 🏟️ court.in
+<a href="#">
+  <img src="assets/logo-horizontal.png" alt="court.in Logo" width="280" />
+</a>
 
-**Platform Reservasi Lapangan Olahraga & Manajemen Gelanggang Terintegrasi**
+<br />
+
+### Platform Reservasi Lapangan Olahraga & Manajemen Gelanggang Terintegrasi
 
 *Solusi digital modern untuk booking lapangan Futsal, Badminton, dan Padel secara real-time, bebas bentrok jadwal, dilengkapi pembayaran QRIS otomatis dan dashboard manajemen venue.*
 

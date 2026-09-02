@@ -267,7 +267,7 @@ export default function ExplorePage() {
         {/* ── Right: Search Bar, Sorting & Court Grid ── */}
         <main className="lg:col-span-3 space-y-6">
           {/* Search Bar & Custom Sort Dropdown */}
-          <div className="bg-surface rounded-2xl p-4 border border-border shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4 reveal-on-scroll">
+          <div className="relative z-30 bg-surface rounded-2xl p-4 border border-border shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4 reveal-on-scroll">
             {/* Search Input */}
             <div className="relative w-full sm:flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
@@ -301,7 +301,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Quick filter chips on mobile/tablet */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar lg:hidden">
+          <div className="relative z-20 flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar lg:hidden">
             {['ALL', 'FUTSAL', 'BADMINTON', 'PADEL'].map((s) => (
               <button
                 key={s}
@@ -321,7 +321,7 @@ export default function ExplorePage() {
 
           {/* Active filter summary pill tags */}
           {(selectedSport !== 'ALL' || selectedEnvironment !== 'ALL' || minRating > 0 || maxPrice < 300000 || searchQuery) && (
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="relative z-10 flex flex-wrap items-center gap-2 text-xs">
               <span className="text-text-muted font-medium">Filter aktif:</span>
               {selectedSport !== 'ALL' && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-light text-primary font-medium">
@@ -367,7 +367,7 @@ export default function ExplorePage() {
 
           {/* Results Court Grid */}
           {filteredCourts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="relative z-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredCourts.map((court, idx) => {
                 const availableCount = court.time_slots.filter((s) => s.available).length
                 const staggerClass = `stagger-${(idx % 6) + 1}`

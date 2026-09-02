@@ -34,7 +34,7 @@ export default function SortDropdown({ value, onChange }) {
   }, [isOpen])
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className={`relative inline-block text-left ${isOpen ? 'z-50' : 'z-20'}`} ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         type="button"
@@ -61,9 +61,9 @@ export default function SortDropdown({ value, onChange }) {
       {isOpen && (
         <div
           role="listbox"
-          className="absolute right-0 top-full mt-2 w-64 bg-surface rounded-2xl border border-border shadow-2xl p-1.5 z-50 animate-slide-in backdrop-blur-md"
+          className="absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2.5rem)] max-h-[min(380px,80vh)] overflow-y-auto bg-surface rounded-2xl border border-border shadow-2xl p-1.5 z-50 animate-slide-in backdrop-blur-md"
         >
-          <div className="px-3 py-2 border-b border-border/80 mb-1">
+          <div className="px-3 py-2 border-b border-border/80 mb-1 sticky top-0 bg-surface/95 backdrop-blur-xs z-10">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block">
               Urutkan Lapangan
             </span>
